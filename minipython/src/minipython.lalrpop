@@ -1,0 +1,10 @@
+use crate::ast::Ast;
+
+grammar;
+
+pub Expr: Ast<String> = {
+    <Name> "+=1" => Ast::Incr { var_name: <> },
+    <Name> "-=1" => Ast::Decr { var_name: <> }
+};
+
+Name: String = r"\w*" => String::from(<>);
