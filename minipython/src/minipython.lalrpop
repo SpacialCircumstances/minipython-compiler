@@ -1,10 +1,11 @@
 use crate::ast::Ast;
+use crate::name::{Name, NameStore};
 
-grammar;
+grammar(names: &mut NameStore);
 
-pub Expr: Ast<String> = {
+pub Expr: Ast<Name> = {
     <Name> "+=1" => Ast::Incr { var_name: <> },
     <Name> "-=1" => Ast::Decr { var_name: <> }
 };
 
-Name: String = r"\w*" => String::from(<>);
+Name: Name = r"\w*" => names.register(<>);
