@@ -211,12 +211,13 @@ mod tests {
 
     #[test]
     fn test_lexer_1() {
-        let code = "while a!=0:";
+        let code = "while a != 0:";
         let tokens = vec![
             While,
             Name("a"),
             NotEqual,
-            Literal(Zero)
+            Literal(Zero),
+            Colon
         ];
         let lexer = Lexer::new(code);
         let res: Vec<Token> = lexer.map(|tk| tk.unwrap()).map(|(_, t, _)| t).collect();
