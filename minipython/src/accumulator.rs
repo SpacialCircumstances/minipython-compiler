@@ -41,9 +41,10 @@ impl<I: Iterator, F: FnMut(I::Item, &mut S) -> (S, Acc<B>), S, B> Iterator for A
     }
 }
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn test_acc() {
+pub trait Accumulateable<F: FnMut(Self::Item, &mut S) -> (S, Acc<B>), S, B>: Iterator + Sized {
+    fn accumulate(&mut self, f: F, state: S) -> Accumulator<&mut Self, F, S, B> {
+        Accumulator::new(self, f, state)
     }
 }
+
+impl<I: Iterator, F: FnMut(Self::Item, &mut S) -> (S, Acc<B>), S, B> Accumulateable<F, S, B> for I {}
