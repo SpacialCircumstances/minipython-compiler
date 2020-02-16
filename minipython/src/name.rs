@@ -17,19 +17,19 @@ pub struct NameStore {
 }
 
 impl NameStore {
-    fn new() -> Self {
+    pub fn new() -> Self {
         NameStore {
             store: Vec::new(),
             last_id: 0
         }
     }
 
-    fn get(&self, n: Name) -> Option<&String> {
+    pub fn get(&self, n: Name) -> Option<&String> {
         let id = n.0;
         self.store.get(id)
     }
 
-    fn register(&mut self, name: &str) -> Name {
+    pub fn register(&mut self, name: &str) -> Name {
         match self.store.iter().enumerate().find(|(k, v)| v == &name) {
             Some((k, _)) => Name(k),
             None => {
