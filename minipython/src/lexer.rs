@@ -43,15 +43,29 @@ impl<'a> Token<'a> {
     }
 }
 
-pub enum LexerError {
-    TabIdent
-}
-
 #[derive(Debug, Eq, PartialEq)]
 pub struct Location {
     line: usize,
     col: usize,
     pos: usize
+}
+
+pub enum LexerErrorKind {
+    TabIdent
+}
+
+pub struct LexerError {
+    position: Location,
+    kind: LexerErrorKind
+}
+
+impl LexerError {
+    fn new(position: Location, kind: LexerErrorKind) -> Self {
+        LexerError {
+            kind,
+            position
+        }
+    }
 }
 
 pub struct Lexer<'input> {
@@ -144,8 +158,9 @@ impl<'input> Iterator for Lexer<'input> {
                             self.incr_pos();
                         }
                         '\t' => {
+                            let pos = self.current_pos();
                             self.incr_pos();
-                            break Some(Err(LexerError::TabIdent));
+                            break Some(Err(LexerError::new(pos, LexerErrorKind::TabIdent)));
                         }
                         '\r' => self.incr_pos(),
                         '#' => {
