@@ -13,14 +13,14 @@ impl Display for Name {
 #[derive(Debug)]
 pub struct NameStore {
     store: Vec<String>,
-    last_id: usize
+    next_id: usize
 }
 
 impl NameStore {
     pub fn new() -> Self {
         NameStore {
             store: Vec::new(),
-            last_id: 0
+            next_id: 0
         }
     }
 
@@ -34,7 +34,7 @@ impl NameStore {
     }
 
     pub fn by_index(&self, idx: usize) -> Option<Name> {
-        if idx >= 0 && idx < self.store.len() {
+        if idx < self.store.len() {
             Some(Name(idx))
         } else {
             None
@@ -45,8 +45,8 @@ impl NameStore {
         match self.get_by_interned(name) {
             Some(n) => n,
             None => {
-                let id = self.last_id + 1;
-                self.last_id = id;
+                let id = self.next_id;
+                self.next_id = id + 1;
                 self.store.push(String::from(name));
                 Name(id)
             }
