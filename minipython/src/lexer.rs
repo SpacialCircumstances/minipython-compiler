@@ -29,6 +29,7 @@ pub enum LexerError {
     TabIdent
 }
 
+#[derive(Debug, Eq, PartialEq)]
 pub struct Location {
     line: usize,
     col: usize,
@@ -92,17 +93,87 @@ pub enum LexerState {
 }
 
 pub struct Lexer<'input> {
-    chars: Position<'input>,
+    chars: Chars<'input>,
     identation_level: i32,
-    state: LexerState
+    line: usize,
+    pos: usize,
+    col: usize
 }
 
 impl<'input> Lexer<'input> {
     pub fn new(input: &'input str) -> Self {
         Lexer {
-            chars: Position::from_chars(input.chars()),
+            chars: input.chars(),
             identation_level: 0,
-            state: LexerState::LineStart
+            line: 1,
+            pos: 0,
+            col: 1
+        }
+    }
+
+    fn current_pos(&self) -> Location {
+        Location {
+            pos: self.pos,
+            line: self.line,
+            col: self.col
+        }
+    }
+
+    fn incr_line(&mut self) {
+        self.line += 1;
+        self.col = 1;
+        self.pos += 1;
+    }
+
+    fn incr_pos(&mut self) {
+        self.col += 1;
+        self.pos += 1;
+    }
+
+    fn single_char_token(c: char) -> Option<Token> {
+        None
+    }
+
+    fn comment(&mut self) {
+
+    }
+}
+
+impl<'input> Iterator for Lexer<'input> {
+    type Item = Spanned<Token, Location, LexerError>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            match self.chars.next() {
+                None => break None,
+                Some(c) => {
+                    match c {
+                        '\n' => {
+                            self.incr_line();
+                        }
+                        ' ' => {
+                            self.incr_pos();
+                        }
+                        '\t' => {
+                            break Some(Err(LexerError::TabIdent));
+                        }
+                        '\r' => self.incr_pos(),
+                        '#' => self.comment(),
+                        _ => {
+                            let pos = self.current_pos();
+                            self.incr_pos();
+                            match Lexer::single_char_token(c) {
+                                Some(tk) => {
+                                    break Some(Ok((pos, tk, self.current_pos())));
+                                },
+                                None => {
+                                    //TODO
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
