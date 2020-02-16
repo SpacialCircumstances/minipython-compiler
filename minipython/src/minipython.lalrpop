@@ -3,7 +3,7 @@ use crate::name::{Name, NameStore};
 
 grammar(names: &mut NameStore);
 
-pub Expr: Ast<Name> = {
+pub Expr: Ast = {
     <Name> "+=1" => Ast::Incr { var_name: <> },
     <Name> "-=1" => Ast::Decr { var_name: <> }
 };
