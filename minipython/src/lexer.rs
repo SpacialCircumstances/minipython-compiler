@@ -1,4 +1,7 @@
 use std::str::{CharIndices, Chars};
+use crate::lexer::Token::*;
+use std::collections::HashSet;
+use std::iter::Peekable;
 
 pub type Spanned<Tok, Loc, Error> = Result<(Loc, Tok, Loc), Error>;
 
@@ -7,7 +10,7 @@ pub enum NumLiteral {
     One
 }
 
-pub enum Token  {
+pub enum Token<'a>  {
     Input,
     Output,
     Comma,
@@ -15,7 +18,7 @@ pub enum Token  {
     Unident,
     Def,
     Colon,
-    Name,
+    Name(&'a str),
     OpenParen,
     CloseParen,
     While,
@@ -23,6 +26,12 @@ pub enum Token  {
     Literal(NumLiteral),
     PlusEqual,
     MinusEqual
+}
+
+impl<'a> Token<'a> {
+    fn from_lexeme(lexeme: &'a str) -> Token {
+        Name(lexeme)
+    }
 }
 
 pub enum LexerError {
@@ -93,7 +102,8 @@ pub enum LexerState {
 }
 
 pub struct Lexer<'input> {
-    chars: Chars<'input>,
+    chars: Peekable<Chars<'input>>,
+    input: &'input str,
     identation_level: i32,
     line: usize,
     pos: usize,
@@ -103,7 +113,8 @@ pub struct Lexer<'input> {
 impl<'input> Lexer<'input> {
     pub fn new(input: &'input str) -> Self {
         Lexer {
-            chars: input.chars(),
+            chars: input.chars().peekable(),
+            input,
             identation_level: 0,
             line: 1,
             pos: 0,
@@ -130,17 +141,41 @@ impl<'input> Lexer<'input> {
         self.pos += 1;
     }
 
-    fn single_char_token(c: char) -> Option<Token> {
-        None
-    }
-
     fn comment(&mut self) {
+        loop {
+            match self.chars.next() {
+                None => break,
+                Some('\n') => {
+                    self.incr_line();
+                    break;
+                }
+                Some(_) => self.incr_pos()
+            }
+        }
+    }
+}
 
+fn single_char_token<'a>(c: char) -> Option<Token<'a>> {
+    match c {
+        ':' => Some(Colon),
+        ',' => Some(Comma),
+        '(' => Some(OpenParen),
+        ')' => Some(CloseParen),
+        '0' => Some(Literal(NumLiteral::Zero)),
+        '1' => Some(Literal(NumLiteral::One)),
+        _ => None
+    }
+}
+
+fn is_separator(c: char) -> bool {
+    match c {
+        ':' | ',' | ' ' | '\n' | '\t' | '\r' | '(' | ')' | '!' | '+' | '-' | '#' => true,
+        _ => false
     }
 }
 
 impl<'input> Iterator for Lexer<'input> {
-    type Item = Spanned<Token, Location, LexerError>;
+    type Item = Spanned<Token<'input>, Location, LexerError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -155,19 +190,36 @@ impl<'input> Iterator for Lexer<'input> {
                             self.incr_pos();
                         }
                         '\t' => {
+                            self.incr_pos();
                             break Some(Err(LexerError::TabIdent));
                         }
                         '\r' => self.incr_pos(),
-                        '#' => self.comment(),
+                        '#' => {
+                            self.incr_pos();
+                            self.comment()
+                        },
                         _ => {
                             let pos = self.current_pos();
                             self.incr_pos();
-                            match Lexer::single_char_token(c) {
+                            match single_char_token(c) {
                                 Some(tk) => {
                                     break Some(Ok((pos, tk, self.current_pos())));
                                 },
                                 None => {
-                                    //TODO
+                                    let mut curr = pos.pos;
+                                    while let Some(next) = self.chars.peek() {
+                                        if is_separator(*next) {
+                                            break;
+                                        } else {
+                                            self.incr_pos();
+                                            self.chars.next();
+                                            curr += 1;
+                                        }
+                                    }
+
+                                    let lexeme = &self.input[pos.pos..curr];
+                                    let token = Token::from_lexeme(lexeme);
+                                    break (Some(Ok((pos, token, self.current_pos()))));
                                 }
                             }
                         }
