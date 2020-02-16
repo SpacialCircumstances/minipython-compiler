@@ -1,7 +1,2 @@
-[package]
-name = "minipython-compiler"
-version = "0.1.0"
-authors = ["SpacialCircumstances <SpacialCircumstances@users.noreply.github.com>"]
-edition = "2018"
-
-[dependencies]
+[workspace]
+members = ["minipython", "minipython-cli"]
