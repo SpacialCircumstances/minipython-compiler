@@ -4,13 +4,23 @@ pub enum Acc<T> {
     Continue
 }
 
-pub struct Accumulator<I, F, S> {
+pub struct Accumulator<I: Iterator, F: FnMut(I::Item, &mut S) -> (S, Acc<B>), S, B> {
     iter: I,
     f: F,
     state: S
 }
 
-impl<B, I: Iterator, F, S> Iterator for Accumulator<I, F, S> where F: FnMut(I::Item, &mut S) -> (S, Acc<B>) {
+impl<I: Iterator, F: FnMut(I::Item, &mut S) -> (S, Acc<B>), S, B> Accumulator<I, F, S, B> {
+    fn new(iter: I, f: F, state: S) -> Self {
+        Accumulator {
+            iter,
+            f,
+            state
+        }
+    }
+}
+
+impl<I: Iterator, F: FnMut(I::Item, &mut S) -> (S, Acc<B>), S, B> Iterator for Accumulator<I, F, S, B>  {
     type Item = B;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -28,5 +38,12 @@ impl<B, I: Iterator, F, S> Iterator for Accumulator<I, F, S> where F: FnMut(I::I
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_acc() {
     }
 }
