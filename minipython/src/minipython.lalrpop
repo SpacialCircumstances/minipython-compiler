@@ -3,7 +3,9 @@ use crate::name::{Name, NameStore};
 
 grammar(names: &mut NameStore);
 
-pub Expr: Ast = {
+pub Program: Vec<Ast> = Expr*;
+
+Expr: Ast = {
     <Name> "+=1" => Ast::Incr { var_name: <> },
     <Name> "-=1" => Ast::Decr { var_name: <> }
 };
