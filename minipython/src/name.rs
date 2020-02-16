@@ -12,34 +12,31 @@ impl Display for Name {
 
 #[derive(Debug)]
 pub struct NameStore {
-    store: HashMap<usize, String>,
+    store: Vec<String>,
     last_id: usize
 }
 
 impl NameStore {
     fn new() -> Self {
         NameStore {
-            store: HashMap::new(),
+            store: Vec::new(),
             last_id: 0
         }
     }
 
     fn get(&self, n: Name) -> Option<&String> {
         let id = n.0;
-        self.store.get(&id)
+        self.store.get(id)
     }
 
     fn register(&mut self, name: &str) -> Name {
-        let found = self.store.iter().find(|(key, value)| value.eq(&name));
-        match found {
+        match self.store.iter().enumerate().find(|(k, v)| v == &name) {
+            Some((k, _)) => Name(k),
             None => {
                 let id = self.last_id + 1;
                 self.last_id = id;
-                self.store.insert(id, String::from(name));
+                self.store.push(String::from(name));
                 Name(id)
-            },
-            Some((k, _)) => {
-                Name(*k)
             }
         }
     }
