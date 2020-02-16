@@ -4,13 +4,13 @@ pub enum Acc<T> {
     Continue
 }
 
-pub struct Accumulator<I: Iterator, F: FnMut(I::Item, &mut S) -> (S, Acc<B>), S, B> {
+pub struct Accumulator<I, F, S, B> where I: Iterator, F: FnMut(I::Item, &mut S) -> (S, Acc<B>) {
     iter: I,
     f: F,
     state: S
 }
 
-impl<I: Iterator, F: FnMut(I::Item, &mut S) -> (S, Acc<B>), S, B> Accumulator<I, F, S, B> {
+impl<I, F, S, B> Accumulator<I, F, S, B> where I: Iterator, F: FnMut(I::Item, &mut S) -> (S, Acc<B>) {
     fn new(iter: I, f: F, state: S) -> Self {
         Accumulator {
             iter,
@@ -20,7 +20,7 @@ impl<I: Iterator, F: FnMut(I::Item, &mut S) -> (S, Acc<B>), S, B> Accumulator<I,
     }
 }
 
-impl<I: Iterator, F: FnMut(I::Item, &mut S) -> (S, Acc<B>), S, B> Iterator for Accumulator<I, F, S, B>  {
+impl<I, F, S, B> Iterator for Accumulator<I, F, S, B> where I: Iterator, F: FnMut(I::Item, &mut S) -> (S, Acc<B>) {
     type Item = B;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -41,10 +41,10 @@ impl<I: Iterator, F: FnMut(I::Item, &mut S) -> (S, Acc<B>), S, B> Iterator for A
     }
 }
 
-pub trait Accumulateable<F: FnMut(Self::Item, &mut S) -> (S, Acc<B>), S, B>: Iterator + Sized {
+pub trait Accumulateable<F, S, B>: Iterator + Sized where F: FnMut(Self::Item, &mut S) -> (S, Acc<B>) {
     fn accumulate(&mut self, f: F, state: S) -> Accumulator<&mut Self, F, S, B> {
         Accumulator::new(self, f, state)
     }
 }
 
-impl<I: Iterator, F: FnMut(Self::Item, &mut S) -> (S, Acc<B>), S, B> Accumulateable<F, S, B> for I {}
+impl<I, F, S, B> Accumulateable<F, S, B> for I where I: Iterator, F: FnMut(Self::Item, &mut S) -> (S, Acc<B>) {}
