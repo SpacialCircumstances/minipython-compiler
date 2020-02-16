@@ -25,7 +25,7 @@ impl NameStore {
     }
 
     pub fn get_by_interned(&self, name: &str) -> Option<Name> {
-        self.store.iter().enumerate().find(|(k, v)| v == &name).map(|(id, _)| Name(id))
+        self.store.iter().position(|v| v == &name).map(|id| Name(id))
     }
 
     pub fn get(&self, n: Name) -> Option<&String> {
