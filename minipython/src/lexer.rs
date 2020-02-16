@@ -35,19 +35,6 @@ pub struct Location {
     pos: usize
 }
 
-pub enum LexerState {
-    LineStart,
-    Comment,
-    Next
-}
-
-pub struct Lexer<'input> {
-    chars: Chars<'input>,
-    identation_level: i32,
-    line: usize,
-    col: usize,
-    state: LexerState
-}
 
 struct Position<'input> {
     chars: Chars<'input>,
@@ -57,12 +44,20 @@ struct Position<'input> {
 }
 
 impl<'input> Position<'input> {
-    fn with_location(c: Chars<'input>) -> Self {
+    fn from_chars(c: Chars<'input>) -> Position {
         Position {
             chars: c,
             pos: 0,
             line: 1,
             col: 1
+        }
+    }
+
+    fn current(&self) -> Location {
+        Location {
+            pos: self.pos,
+            line: self.line,
+            col: self.col
         }
     }
 }
@@ -71,18 +66,42 @@ impl<'input> Iterator for Position<'input> {
     type Item = (Location, char);
 
     fn next(&mut self) -> Option<Self::Item> {
-        unimplemented!()
+        match self.chars.next() {
+            None => None,
+            Some('\n') => {
+                let pos = self.current();
+                self.line += 1;
+                self.col = 1;
+                self.pos += 1;
+                Some((pos, '\n'))
+            },
+            Some(x) => {
+                let pos = self.current();
+                self.col += 1;
+                self.pos += 1;
+                Some((pos, x))
+            }
+        }
     }
 }
 
+pub enum LexerState {
+    LineStart,
+    Comment,
+    Next
+}
+
+pub struct Lexer<'input> {
+    chars: Position<'input>,
+    identation_level: i32,
+    state: LexerState
+}
 
 impl<'input> Lexer<'input> {
     pub fn new(input: &'input str) -> Self {
         Lexer {
-            chars: input.chars(),
+            chars: Position::from_chars(input.chars()),
             identation_level: 0,
-            line: 1,
-            col: 0,
             state: LexerState::LineStart
         }
     }
