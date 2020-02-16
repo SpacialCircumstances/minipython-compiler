@@ -190,7 +190,7 @@ impl<'input> Iterator for Lexer<'input> {
                                         }
                                     }
 
-                                    let lexeme = &self.input[pos.pos..curr];
+                                    let lexeme = &self.input[pos.pos..=curr];
                                     let token = Token::from_lexeme(lexeme);
                                     break (Some(Ok((pos, token, self.current_pos()))));
                                 }
