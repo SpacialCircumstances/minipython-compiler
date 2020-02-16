@@ -5,11 +5,13 @@ use std::iter::Peekable;
 
 pub type Spanned<Tok, Loc, Error> = Result<(Loc, Tok, Loc), Error>;
 
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum NumLiteral {
     Zero,
     One
 }
 
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Token<'a>  {
     Input,
     Output,
@@ -43,17 +45,19 @@ impl<'a> Token<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub struct Location {
     line: usize,
     col: usize,
     pos: usize
 }
 
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum LexerErrorKind {
     TabIdent
 }
 
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub struct LexerError {
     position: Location,
     kind: LexerErrorKind
@@ -196,5 +200,26 @@ impl<'input> Iterator for Lexer<'input> {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::lexer::{Token, NumLiteral, Lexer, Spanned, Location, LexerError};
+    use crate::lexer::Token::*;
+    use crate::lexer::NumLiteral::*;
+
+    #[test]
+    fn test_lexer_1() {
+        let code = "while a!=0:";
+        let tokens = vec![
+            While,
+            Name("a"),
+            NotEqual,
+            Literal(Zero)
+        ];
+        let lexer = Lexer::new(code);
+        let res: Vec<Token> = lexer.map(|tk| tk.unwrap()).map(|(_, t, _)| t).collect();
+        assert_eq!(tokens, res);
     }
 }
