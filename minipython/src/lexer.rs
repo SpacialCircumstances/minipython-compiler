@@ -211,6 +211,12 @@ mod tests {
     use crate::lexer::Token::*;
     use crate::lexer::NumLiteral::*;
 
+    fn lex_equal(code: &str, tokens: Vec<Token>) {
+        let lexer = Lexer::new(code);
+        let res: Vec<Token> = lexer.map(|tk| tk.unwrap()).map(|(_, t, _)| t).collect();
+        assert_eq!(res, tokens);
+    }
+
     #[test]
     fn test_lexer_1() {
         let code = "while a != 0:";
@@ -221,8 +227,34 @@ mod tests {
             Literal(Zero),
             Colon
         ];
-        let lexer = Lexer::new(code);
-        let res: Vec<Token> = lexer.map(|tk| tk.unwrap()).map(|(_, t, _)| t).collect();
-        assert_eq!(res, tokens);
+        lex_equal(code, tokens);
+    }
+
+    #[test]
+    fn test_lexer_2() {
+        let code = "return x";
+        let tokens = vec![ Token::Return, Name("x") ];
+        lex_equal(code, tokens);
+    }
+
+    #[test]
+    fn test_lexer_3() {
+        let code = "a += 1 #test";
+        let tokens = vec![ Name("a"), PlusEqual, Literal(One) ];
+        lex_equal(code, tokens);
+    }
+
+    #[test]
+    fn test_lexer_4() {
+        let code = "input: a, b, c";
+        let tokens = vec![ Input, Colon, Name("a"), Comma, Name("b"), Comma, Name("c") ];
+        lex_equal(code, tokens);
+    }
+
+    #[test]
+    fn test_lexer_5() {
+        let code = "def a(b, c, d): a += 1";
+        let tokens = vec![ Def, Name("a"), OpenParen, Name("b"), Comma, Name("c"), Comma, Name("d"), CloseParen, Colon, Name("a"), PlusEqual, Literal(One) ];
+        lex_equal(code, tokens);
     }
 }
