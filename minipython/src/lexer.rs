@@ -30,7 +30,16 @@ pub enum Token<'a>  {
 
 impl<'a> Token<'a> {
     fn from_lexeme(lexeme: &'a str) -> Token {
-        Name(lexeme)
+        match lexeme {
+            "while" => While,
+            "input" => Input,
+            "output" => Output,
+            "def" => Def,
+            "!=" => NotEqual,
+            "+=" => PlusEqual,
+            "-=" => MinusEqual,
+            _ => Name(lexeme)
+        }
     }
 }
 
@@ -187,6 +196,7 @@ impl<'input> Iterator for Lexer<'input> {
                             self.incr_line();
                         }
                         ' ' => {
+                            //TODO: Identation
                             self.incr_pos();
                         }
                         '\t' => {
