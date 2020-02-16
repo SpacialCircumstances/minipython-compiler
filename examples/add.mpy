@@ -1,0 +1,19 @@
+#Addition program
+#Define input variables
+input: a, b
+#Define output variables
+output: x
+
+#Add function
+def add(x, y):
+    while x!=0:
+        n+=1
+        x-=1
+    #endwhile
+    while y!=0:
+        n+=1
+        y-=1
+    #endwhile
+    return n
+#enddef
+x=add(a, b)
