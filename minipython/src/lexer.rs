@@ -220,6 +220,6 @@ mod tests {
         ];
         let lexer = Lexer::new(code);
         let res: Vec<Token> = lexer.map(|tk| tk.unwrap()).map(|(_, t, _)| t).collect();
-        assert_eq!(tokens, res);
+        assert_eq!(res, tokens);
     }
 }

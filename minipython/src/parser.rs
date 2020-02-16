@@ -23,6 +23,6 @@ mod tests {
             var_name: store.by_index(0).unwrap()
         }];
         assert!(res.is_ok());
-        assert_eq!(expected, res.unwrap());
+        assert_eq!(res.unwrap(), expected);
     }
 }
