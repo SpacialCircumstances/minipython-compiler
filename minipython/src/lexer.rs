@@ -153,14 +153,14 @@ impl<'input> LexerState<'input> {
             input: self.input
         }
     }
+}
 
-    fn current_by_token_start(&mut self, c: char) {
-        self.current_token = match c {
-            '#' => CurrentToken::Comment,
-            '\n' => CurrentToken::Indent,
-            ' ' | '\t' => CurrentToken::NextToken,
-            _ => CurrentToken::Name(self.pos)
-        }
+fn current_by_token_start(state: &LexerState, c: char) -> CurrentToken {
+    match c {
+        '#' => CurrentToken::Comment,
+        '\n' => CurrentToken::Indent,
+        ' ' | '\t' => CurrentToken::NextToken,
+        _ => CurrentToken::Name(state.pos)
     }
 }
 
@@ -183,7 +183,7 @@ fn lex_step<'input>(it: Option<char>, state: &LexerState<'input>) -> (LexerState
                             } else {
                                 state.incr_pos()
                             };
-                            next_state.current_by_token_start(c);
+                            next_state.current_token = current_by_token_start(state, c);
                             if state.indent_level < state.last_indent_level {
                                 (next_state, Acc::Next(Ok((state.pos, Token::Unindent, next_state.pos))))
                             } else if state.indent_level > state.last_indent_level {
@@ -200,7 +200,7 @@ fn lex_step<'input>(it: Option<char>, state: &LexerState<'input>) -> (LexerState
                     } else {
                         state.incr_pos()
                     };
-                    next_state.current_by_token_start(c);
+                    next_state.current_token = current_by_token_start(state, c);
                     (next_state, Acc::Continue)
                 },
                 CurrentToken::Comment => {
@@ -221,7 +221,7 @@ fn lex_step<'input>(it: Option<char>, state: &LexerState<'input>) -> (LexerState
                         } else {
                             state.incr_pos()
                         };
-                        next_state.current_by_token_start(c);
+                        next_state.current_token = current_by_token_start(state, c);
                         let token = if lexeme.len() == 1 {
                             single_char_token(lexeme.chars().nth(0).unwrap()).unwrap_or(Token::from_lexeme(lexeme))
                         } else {
