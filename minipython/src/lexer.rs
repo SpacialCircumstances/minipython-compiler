@@ -80,7 +80,8 @@ enum CurrentToken {
     Indent,
     NextToken,
     Comment,
-    Name(Location)
+    Name(Location),
+    SingleCharToken(Location, char)
 }
 
 fn is_separator(c: char) -> bool {
@@ -160,7 +161,10 @@ fn current_by_token_start(state: &LexerState, c: char) -> CurrentToken {
         '#' => CurrentToken::Comment,
         '\n' => CurrentToken::Indent,
         ' ' | '\t' => CurrentToken::NextToken,
-        _ => CurrentToken::Name(state.pos)
+        _ => match single_char_token(c) {
+            None => CurrentToken::Name(state.pos),
+            Some(_) => CurrentToken::SingleCharToken(state.pos, c)
+        }
     }
 }
 
@@ -170,6 +174,11 @@ fn lex_step<'input>(it: Option<char>, state: &LexerState<'input>) -> (LexerState
     match it {
         None => match state.current_token {
             CurrentToken::Indent | CurrentToken::NextToken | CurrentToken::Comment => (state.clone(), Acc::End),
+            CurrentToken::SingleCharToken(pos, tkc) => {
+                let mut next_state = state.clone();
+                next_state.current_token = CurrentToken::NextToken;
+                (next_state, Acc::Next(Ok((pos, single_char_token(tkc).unwrap(), state.pos))))
+            }
             CurrentToken::Name(start) => {
                 let end = state.pos.pos;
                 let lexeme = &state.input[start.pos..end];
@@ -225,7 +234,7 @@ fn lex_step<'input>(it: Option<char>, state: &LexerState<'input>) -> (LexerState
                     } else {
                         (state.incr_pos(), Acc::Continue)
                     }
-                }
+                },
                 CurrentToken::Name(start) => {
                     if is_separator(c) {
                         let end = state.pos.pos;
@@ -245,6 +254,15 @@ fn lex_step<'input>(it: Option<char>, state: &LexerState<'input>) -> (LexerState
                     } else {
                         (state.incr_pos(), Acc::Continue)
                     }
+                },
+                CurrentToken::SingleCharToken(pos, tkc) => {
+                    let mut next_state = if c == '\n' {
+                        state.incr_line()
+                    } else {
+                        state.incr_pos()
+                    };
+                    next_state.current_token = current_by_token_start(state, c);
+                    (next_state, Acc::Next(Ok((pos, single_char_token(tkc).unwrap(), state.pos))))
                 }
             }
     }
