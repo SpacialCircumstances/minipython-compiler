@@ -168,7 +168,21 @@ type LexerResult<'input> = Spanned<Token<'input>, Location, LexerError>;
 
 fn lex_step<'input>(it: Option<char>, state: &LexerState<'input>) -> (LexerState<'input>, Acc<LexerResult<'input>>) {
     match it {
-        None => (state.clone(), Acc::End), //TODO: Check if string literal etc is finished
+        None => match state.current_token {
+            CurrentToken::Indent | CurrentToken::NextToken | CurrentToken::Comment => (state.clone(), Acc::End),
+            CurrentToken::Name(start) => {
+                let end = state.pos.pos;
+                let lexeme = &state.input[start.pos..end];
+                let mut next_state = state.clone();
+                next_state.current_token = CurrentToken::NextToken;
+                let token = if lexeme.len() == 1 {
+                    single_char_token(lexeme.chars().nth(0).unwrap()).unwrap_or(Token::from_lexeme(lexeme))
+                } else {
+                    Token::from_lexeme(lexeme)
+                };
+                (next_state, Acc::Next(Ok((start, token, state.pos))))
+            }
+        },
         Some(c) => match state.current_token {
                 CurrentToken::Indent => {
                     match c {
