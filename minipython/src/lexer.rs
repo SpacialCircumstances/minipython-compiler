@@ -83,6 +83,13 @@ enum CurrentToken {
     Name
 }
 
+fn is_separator(c: char) -> bool {
+    match c {
+        ':' | ',' | ' ' | '\n' | '\t' | '\r' | '(' | ')' | '!' | '+' | '-' | '#' => true,
+        _ => false
+    }
+}
+
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 struct LexerState {
     pub pos: Location,
@@ -136,6 +143,7 @@ fn current_by_token_start(c: char) -> CurrentToken {
     match c {
         '#' => CurrentToken::Comment,
         '\n' => CurrentToken::Indent,
+        ' ' | '\t' => CurrentToken::NextToken,
         _ => CurrentToken::Name
     }
 }
@@ -148,7 +156,7 @@ fn lex_step<'input>(it: Option<char>, state: &LexerState) -> (LexerState, Acc<Le
         Some(c) => match state.current_token {
                 CurrentToken::Indent => {
                     match c {
-                        ' ' => {
+                        ' ' | '\t' => {
                             let mut next_state = state.incr_pos();
                             next_state.indent_level += 1;
                             (next_state, Acc::Continue)
@@ -171,7 +179,13 @@ fn lex_step<'input>(it: Option<char>, state: &LexerState) -> (LexerState, Acc<Le
                     }
                 },
                 CurrentToken::NextToken => {
-                    (LexerState::new(), Acc::Continue)
+                    let mut next_state = if c == '\n' {
+                        state.incr_line()
+                    } else {
+                        state.incr_pos()
+                    };
+                    next_state.current_token = current_by_token_start(c);
+                    (next_state, Acc::Continue)
                 },
                 CurrentToken::Comment => {
                     if c == '\n' {
@@ -183,7 +197,12 @@ fn lex_step<'input>(it: Option<char>, state: &LexerState) -> (LexerState, Acc<Le
                     }
                 }
                 CurrentToken::Name => {
-                    (LexerState::new(), Acc::Continue)
+                    if is_separator(c) {
+                        //TODO: Finish token
+                        (LexerState::new(), Acc::Continue)
+                    } else {
+                        (state.incr_pos(), Acc::Continue)
+                    }
                 }
             }
     }
@@ -257,13 +276,6 @@ fn single_char_token<'a>(c: char) -> Option<Token<'a>> {
         '0' => Some(Literal(NumLiteral::Zero)),
         '1' => Some(Literal(NumLiteral::One)),
         _ => None
-    }
-}
-
-fn is_separator(c: char) -> bool {
-    match c {
-        ':' | ',' | ' ' | '\n' | '\t' | '\r' | '(' | ')' | '!' | '+' | '-' | '#' => true,
-        _ => false
     }
 }
 
