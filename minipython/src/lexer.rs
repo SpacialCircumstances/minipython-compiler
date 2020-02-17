@@ -76,7 +76,7 @@ impl LexerError {
 }
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
-enum CurrentToken {
+pub enum CurrentToken {
     Indent,
     NextToken,
     Comment,
@@ -104,7 +104,7 @@ fn single_char_token<'a>(c: char) -> Option<Token<'a>> {
 }
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
-struct LexerState<'input> {
+pub struct LexerState<'input> {
     pub pos: Location,
     pub current_token: CurrentToken,
     pub last_indent_level: usize,
@@ -268,7 +268,7 @@ fn lex_step<'input>(it: Option<char>, state: &LexerState<'input>) -> (LexerState
     }
 }
 
-fn lex<'input>(input: &'input str) -> Accumulator<Chars<'input>, fn(Option<char>, &LexerState<'input>) -> (LexerState<'input>, Acc<LexerResult<'input>>), LexerState, LexerResult<'input>> {
+pub fn lex<'input>(input: &'input str) -> Accumulator<Chars<'input>, fn(Option<char>, &LexerState<'input>) -> (LexerState<'input>, Acc<LexerResult<'input>>), LexerState, LexerResult<'input>> {
     let mut initial_state = LexerState::new(input);
     input.chars().accumulate(lex_step, initial_state)
 }
@@ -322,6 +322,13 @@ mod tests {
     fn test_lexer_5() {
         let code = "def a(b, c, d): a += 1";
         let tokens = vec![ Def, Name("a"), OpenParen, Name("b"), Comma, Name("c"), Comma, Name("d"), CloseParen, Colon, Name("a"), PlusEqual, Literal(One) ];
+        lex_equal(code, tokens);
+    }
+
+    #[test]
+    fn test_lexer_6() {
+        let code = "   a += 1";
+        let tokens = vec![ Indent, Name("a"), PlusEqual, Literal(One) ];
         lex_equal(code, tokens);
     }
 }
