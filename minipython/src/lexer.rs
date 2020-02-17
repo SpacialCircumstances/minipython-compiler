@@ -91,10 +91,9 @@ fn lex_step<'input>(it: Option<char>, state: &LexerState) -> (LexerState, Acc<Le
     (LexerState::new(), Acc::Continue)
 }
 
-fn lex<'input>(input: &'input str) {
+fn lex<'input>(input: &'input str) -> Accumulator<Chars<'input>, fn(Option<char>, &LexerState) -> (LexerState, Acc<LexerResult<'input>>), LexerState, LexerResult<'input>> {
     let mut initial_state = LexerState::new();
-    let mut chars: Chars<'input> = input.chars();
-    chars.accumulate(lex_step, initial_state);
+    input.chars().accumulate(lex_step, initial_state)
 }
 
 pub struct Lexer<'input> {

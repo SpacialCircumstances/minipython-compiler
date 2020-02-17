@@ -37,7 +37,7 @@ impl<I, F, S, B> Iterator for Accumulator<I, F, S, B> where I: Iterator, F: Fn(O
 }
 
 pub trait Accumulateable<F, S, B>: Iterator + Sized where F: Fn(Option<Self::Item>, &S) -> (S, Acc<B>) {
-    fn accumulate(&mut self, f: F, state: S) -> Accumulator<&mut Self, F, S, B> {
+    fn accumulate(self, f: F, state: S) -> Accumulator<Self, F, S, B> {
         Accumulator::new(self, f, state)
     }
 }
