@@ -2,6 +2,7 @@ use std::str::{CharIndices, Chars};
 use crate::lexer::Token::*;
 use std::collections::HashSet;
 use std::iter::Peekable;
+use crate::accumulator::{Accumulator, Accumulateable, Acc};
 
 pub type Spanned<Tok, Loc, Error> = Result<(Loc, Tok, Loc), Error>;
 
@@ -72,6 +73,28 @@ impl LexerError {
             position
         }
     }
+}
+
+struct LexerState {
+
+}
+
+impl LexerState {
+    fn new() -> Self {
+        LexerState {}
+    }
+}
+
+type LexerResult<'input> = Spanned<Token<'input>, Location, LexerError>;
+
+fn lex_step<'input>(it: Option<char>, state: &LexerState) -> (LexerState, Acc<LexerResult<'input>>) {
+    (LexerState::new(), Acc::Continue)
+}
+
+fn lex<'input>(input: &'input str) {
+    let mut initial_state = LexerState::new();
+    let mut chars: Chars<'input> = input.chars();
+    chars.accumulate(lex_step, initial_state);
 }
 
 pub struct Lexer<'input> {
