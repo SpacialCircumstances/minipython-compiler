@@ -210,7 +210,11 @@ fn lex_step<'input>(it: Option<char>, state: &LexerState<'input>) -> (LexerState
                             state.incr_pos()
                         };
                         next_state.current_by_token_start(c);
-                        let token = Token::from_lexeme(lexeme);
+                        let token = if lexeme.len() == 1 {
+                            single_char_token(lexeme.chars().nth(0).unwrap()).unwrap_or(Token::from_lexeme(lexeme))
+                        } else {
+                            Token::from_lexeme(lexeme)
+                        };
                         (next_state, Acc::Next(Ok((start, token, state.pos))))
                     } else {
                         (state.incr_pos(), Acc::Continue)
