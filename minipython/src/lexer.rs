@@ -174,7 +174,13 @@ fn lex_step<'input>(it: Option<char>, state: &LexerState) -> (LexerState, Acc<Le
                     (LexerState::new(), Acc::Continue)
                 },
                 CurrentToken::Comment => {
-                    (LexerState::new(), Acc::Continue)
+                    if c == '\n' {
+                        let mut next_state = state.incr_line();
+                        next_state.current_token = CurrentToken::Indent;
+                        (next_state, Acc::Continue)
+                    } else {
+                        (state.incr_pos(), Acc::Continue)
+                    }
                 }
                 CurrentToken::Name => {
                     (LexerState::new(), Acc::Continue)
