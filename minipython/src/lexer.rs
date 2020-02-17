@@ -17,8 +17,8 @@ pub enum Token<'a>  {
     Input,
     Output,
     Comma,
-    Ident,
-    Unident,
+    Indent,
+    Unindent,
     Return,
     Def,
     Colon,
@@ -75,20 +75,67 @@ impl LexerError {
     }
 }
 
-struct LexerState {
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+enum CurrentToken {
+    Indent,
+    NextToken
+}
 
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+struct LexerState {
+    pub pos: Location,
+    pub current_token: CurrentToken
 }
 
 impl LexerState {
     fn new() -> Self {
-        LexerState {}
+        LexerState {
+            pos: Location {
+                pos: 0,
+                line: 1,
+                col: 1
+            },
+            current_token: CurrentToken::Indent
+        }
+    }
+
+    fn incr_line(&self) -> Self {
+        LexerState {
+            pos: Location {
+                line: self.pos.line + 1,
+                pos: self.pos.pos + 1,
+                col: 1
+            },
+            current_token: self.current_token
+        }
+    }
+
+    fn incr_pos(&self) -> Self {
+        LexerState {
+            pos: Location {
+                pos: self.pos.pos + 1,
+                line: self.pos.line,
+                col: self.pos.col
+            },
+            current_token: self.current_token
+        }
     }
 }
 
 type LexerResult<'input> = Spanned<Token<'input>, Location, LexerError>;
 
 fn lex_step<'input>(it: Option<char>, state: &LexerState) -> (LexerState, Acc<LexerResult<'input>>) {
-    (LexerState::new(), Acc::Continue)
+    match it {
+        None => (state.clone(), Acc::End),
+        Some(c) => match state.current_token {
+                CurrentToken::Indent => {
+                    (LexerState::new(), Acc::Continue)
+                },
+                CurrentToken::NextToken => {
+                    (LexerState::new(), Acc::Continue)
+                }
+            }
+    }
 }
 
 fn lex<'input>(input: &'input str) -> Accumulator<Chars<'input>, fn(Option<char>, &LexerState) -> (LexerState, Acc<LexerResult<'input>>), LexerState, LexerResult<'input>> {
