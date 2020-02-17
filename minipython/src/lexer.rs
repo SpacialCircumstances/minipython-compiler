@@ -78,13 +78,17 @@ impl LexerError {
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 enum CurrentToken {
     Indent,
-    NextToken
+    NextToken,
+    Comment,
+    Name
 }
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 struct LexerState {
     pub pos: Location,
-    pub current_token: CurrentToken
+    pub current_token: CurrentToken,
+    pub last_indent_level: usize,
+    pub indent_level: usize
 }
 
 impl LexerState {
@@ -95,7 +99,9 @@ impl LexerState {
                 line: 1,
                 col: 1
             },
-            current_token: CurrentToken::Indent
+            current_token: CurrentToken::Indent,
+            last_indent_level: 0,
+            indent_level: 0
         }
     }
 
@@ -106,7 +112,9 @@ impl LexerState {
                 pos: self.pos.pos + 1,
                 col: 1
             },
-            current_token: self.current_token
+            current_token: self.current_token,
+            last_indent_level: self.indent_level,
+            indent_level: 0
         }
     }
 
@@ -117,8 +125,18 @@ impl LexerState {
                 line: self.pos.line,
                 col: self.pos.col
             },
-            current_token: self.current_token
+            current_token: self.current_token,
+            indent_level: self.indent_level,
+            last_indent_level: self.last_indent_level
         }
+    }
+}
+
+fn current_by_token_start(c: char) -> CurrentToken {
+    match c {
+        '#' => CurrentToken::Comment,
+        '\n' => CurrentToken::Indent,
+        _ => CurrentToken::Name
     }
 }
 
@@ -126,12 +144,39 @@ type LexerResult<'input> = Spanned<Token<'input>, Location, LexerError>;
 
 fn lex_step<'input>(it: Option<char>, state: &LexerState) -> (LexerState, Acc<LexerResult<'input>>) {
     match it {
-        None => (state.clone(), Acc::End),
+        None => (state.clone(), Acc::End), //TODO: Check if string literal etc is finished
         Some(c) => match state.current_token {
                 CurrentToken::Indent => {
-                    (LexerState::new(), Acc::Continue)
+                    match c {
+                        ' ' => {
+                            let mut next_state = state.incr_pos();
+                            next_state.indent_level += 1;
+                            (next_state, Acc::Continue)
+                        }
+                        _ => {
+                            let mut next_state = if c == '\n' {
+                                state.incr_line()
+                            } else {
+                                state.incr_pos()
+                            };
+                            next_state.current_token = current_by_token_start(c);
+                            if state.indent_level < state.last_indent_level {
+                                (next_state, Acc::Next(Ok((state.pos, Token::Unindent, next_state.pos))))
+                            } else if state.indent_level > state.last_indent_level {
+                                (next_state, Acc::Next(Ok((state.pos, Token::Indent, next_state.pos))))
+                            } else {
+                                (next_state, Acc::Continue)
+                            }
+                        }
+                    }
                 },
                 CurrentToken::NextToken => {
+                    (LexerState::new(), Acc::Continue)
+                },
+                CurrentToken::Comment => {
+                    (LexerState::new(), Acc::Continue)
+                }
+                CurrentToken::Name => {
                     (LexerState::new(), Acc::Continue)
                 }
             }
