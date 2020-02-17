@@ -91,15 +91,16 @@ fn is_separator(c: char) -> bool {
 }
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
-struct LexerState {
+struct LexerState<'input> {
     pub pos: Location,
     pub current_token: CurrentToken,
     pub last_indent_level: usize,
-    pub indent_level: usize
+    pub indent_level: usize,
+    pub input: &'input str
 }
 
-impl LexerState {
-    fn new() -> Self {
+impl<'input> LexerState<'input> {
+    fn new(input: &'input str) -> Self {
         LexerState {
             pos: Location {
                 pos: 0,
@@ -108,7 +109,8 @@ impl LexerState {
             },
             current_token: CurrentToken::Indent,
             last_indent_level: 0,
-            indent_level: 0
+            indent_level: 0,
+            input
         }
     }
 
@@ -121,6 +123,7 @@ impl LexerState {
             },
             current_token: self.current_token,
             last_indent_level: self.indent_level,
+            input: self.input,
             indent_level: 0
         }
     }
@@ -134,7 +137,8 @@ impl LexerState {
             },
             current_token: self.current_token,
             indent_level: self.indent_level,
-            last_indent_level: self.last_indent_level
+            last_indent_level: self.last_indent_level,
+            input: self.input
         }
     }
 }
@@ -150,7 +154,7 @@ fn current_by_token_start(c: char) -> CurrentToken {
 
 type LexerResult<'input> = Spanned<Token<'input>, Location, LexerError>;
 
-fn lex_step<'input>(it: Option<char>, state: &LexerState) -> (LexerState, Acc<LexerResult<'input>>) {
+fn lex_step<'input>(it: Option<char>, state: &LexerState<'input>) -> (LexerState<'input>, Acc<LexerResult<'input>>) {
     match it {
         None => (state.clone(), Acc::End), //TODO: Check if string literal etc is finished
         Some(c) => match state.current_token {
@@ -199,7 +203,7 @@ fn lex_step<'input>(it: Option<char>, state: &LexerState) -> (LexerState, Acc<Le
                 CurrentToken::Name => {
                     if is_separator(c) {
                         //TODO: Finish token
-                        (LexerState::new(), Acc::Continue)
+                        (state.clone(), Acc::Continue)
                     } else {
                         (state.incr_pos(), Acc::Continue)
                     }
@@ -208,8 +212,8 @@ fn lex_step<'input>(it: Option<char>, state: &LexerState) -> (LexerState, Acc<Le
     }
 }
 
-fn lex<'input>(input: &'input str) -> Accumulator<Chars<'input>, fn(Option<char>, &LexerState) -> (LexerState, Acc<LexerResult<'input>>), LexerState, LexerResult<'input>> {
-    let mut initial_state = LexerState::new();
+fn lex<'input>(input: &'input str) -> Accumulator<Chars<'input>, fn(Option<char>, &LexerState<'input>) -> (LexerState<'input>, Acc<LexerResult<'input>>), LexerState, LexerResult<'input>> {
+    let mut initial_state = LexerState::new(input);
     input.chars().accumulate(lex_step, initial_state)
 }
 
