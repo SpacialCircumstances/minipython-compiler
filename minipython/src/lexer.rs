@@ -80,7 +80,7 @@ enum CurrentToken {
     Indent,
     NextToken,
     Comment,
-    Name
+    Name(Location)
 }
 
 fn is_separator(c: char) -> bool {
@@ -141,14 +141,14 @@ impl<'input> LexerState<'input> {
             input: self.input
         }
     }
-}
 
-fn current_by_token_start(c: char) -> CurrentToken {
-    match c {
-        '#' => CurrentToken::Comment,
-        '\n' => CurrentToken::Indent,
-        ' ' | '\t' => CurrentToken::NextToken,
-        _ => CurrentToken::Name
+    fn current_by_token_start(&mut self, c: char) {
+        self.current_token = match c {
+            '#' => CurrentToken::Comment,
+            '\n' => CurrentToken::Indent,
+            ' ' | '\t' => CurrentToken::NextToken,
+            _ => CurrentToken::Name(self.pos)
+        }
     }
 }
 
@@ -171,7 +171,7 @@ fn lex_step<'input>(it: Option<char>, state: &LexerState<'input>) -> (LexerState
                             } else {
                                 state.incr_pos()
                             };
-                            next_state.current_token = current_by_token_start(c);
+                            next_state.current_by_token_start(c);
                             if state.indent_level < state.last_indent_level {
                                 (next_state, Acc::Next(Ok((state.pos, Token::Unindent, next_state.pos))))
                             } else if state.indent_level > state.last_indent_level {
@@ -188,7 +188,7 @@ fn lex_step<'input>(it: Option<char>, state: &LexerState<'input>) -> (LexerState
                     } else {
                         state.incr_pos()
                     };
-                    next_state.current_token = current_by_token_start(c);
+                    next_state.current_by_token_start(c);
                     (next_state, Acc::Continue)
                 },
                 CurrentToken::Comment => {
@@ -200,10 +200,18 @@ fn lex_step<'input>(it: Option<char>, state: &LexerState<'input>) -> (LexerState
                         (state.incr_pos(), Acc::Continue)
                     }
                 }
-                CurrentToken::Name => {
+                CurrentToken::Name(start) => {
                     if is_separator(c) {
-                        //TODO: Finish token
-                        (state.clone(), Acc::Continue)
+                        let end = state.pos.pos;
+                        let lexeme = &state.input[start.pos..end];
+                        let mut next_state = if c == '\n' {
+                            state.incr_line()
+                        } else {
+                            state.incr_pos()
+                        };
+                        next_state.current_by_token_start(c);
+                        let token = Token::from_lexeme(lexeme);
+                        (next_state, Acc::Next(Ok((start, token, state.pos))))
                     } else {
                         (state.incr_pos(), Acc::Continue)
                     }
