@@ -171,52 +171,52 @@ impl<'input> Iterator for Lexer<'input> {
                     Some(' ') => {
                         if self.parse_indent {
                             self.indent_level += 1;
+                            if let Some(next) = self.chars.peek() {
+                                if *next != ' ' {
+                                    //TODO: Handle indent
+                                }
+                            }
                         }
                         self.incr_pos();
                     }
                     Some(c) => {
-                        if self.parse_indent {
-                            //TODO: Finish indent
-                            break None
-                        } else {
-                            match c {
-                                '\n' => {
-                                    self.incr_line();
-                                }
+                        match c {
+                            '\n' => {
+                                self.incr_line();
+                            }
 
-                                '\t' => {
-                                    let pos = self.current_pos();
-                                    self.incr_pos();
-                                    break Some(Err(LexerError::new(pos, LexerErrorKind::TabIdent)));
-                                }
-                                '\r' => self.incr_pos(),
-                                '#' => {
-                                    self.incr_pos();
-                                    self.comment()
-                                }
-                                _ => {
-                                    let pos = self.current_pos();
-                                    self.incr_pos();
-                                    match single_char_token(c) {
-                                        Some(tk) => {
-                                            break Some(Ok((pos, tk, self.current_pos())));
-                                        }
-                                        None => {
-                                            let mut curr = pos.pos;
-                                            while let Some(next) = self.chars.peek() {
-                                                if is_separator(*next) {
-                                                    break;
-                                                } else {
-                                                    self.incr_pos();
-                                                    self.chars.next();
-                                                    curr += 1;
-                                                }
+                            '\t' => {
+                                let pos = self.current_pos();
+                                self.incr_pos();
+                                break Some(Err(LexerError::new(pos, LexerErrorKind::TabIdent)));
+                            }
+                            '\r' => self.incr_pos(),
+                            '#' => {
+                                self.incr_pos();
+                                self.comment()
+                            }
+                            _ => {
+                                let pos = self.current_pos();
+                                self.incr_pos();
+                                match single_char_token(c) {
+                                    Some(tk) => {
+                                        break Some(Ok((pos, tk, self.current_pos())));
+                                    }
+                                    None => {
+                                        let mut curr = pos.pos;
+                                        while let Some(next) = self.chars.peek() {
+                                            if is_separator(*next) {
+                                                break;
+                                            } else {
+                                                self.incr_pos();
+                                                self.chars.next();
+                                                curr += 1;
                                             }
-
-                                            let lexeme = &self.input[pos.pos..=curr];
-                                            let token = Token::from_lexeme(lexeme);
-                                            break (Some(Ok((pos, token, self.current_pos()))));
                                         }
+
+                                        let lexeme = &self.input[pos.pos..=curr];
+                                        let token = Token::from_lexeme(lexeme);
+                                        break (Some(Ok((pos, token, self.current_pos()))));
                                     }
                                 }
                             }
@@ -284,7 +284,7 @@ mod tests {
     #[test]
     fn test_lexer_6() {
         let code = "   a += 1";
-        let tokens = vec![ Indent, Name("a"), PlusEqual, Literal(One) ];
+        let tokens = vec![Indent, Name("a"), PlusEqual, Literal(One)];
         lex_equal(code, tokens);
     }
 
@@ -298,8 +298,8 @@ mod tests {
             c += 1
             ";
         let tokens =
-            vec![ Def, Name("test"), OpenParen, Name("a"), Comma, Name("b"), CloseParen, Colon,
-                  Indent, Name("a"), PlusEqual, Literal(One), Name("b"), MinusEqual, Literal(One), Return, Name("a"), Unindent, Name("c"), PlusEqual, Literal(One) ];
+            vec![Def, Name("test"), OpenParen, Name("a"), Comma, Name("b"), CloseParen, Colon,
+                 Indent, Name("a"), PlusEqual, Literal(One), Name("b"), MinusEqual, Literal(One), Return, Name("a"), Unindent, Name("c"), PlusEqual, Literal(One)];
         lex_equal(code, tokens);
     }
 
@@ -311,7 +311,7 @@ mod tests {
                     c
             d
             ";
-        let tokens = vec![ Name("a"), Indent, Name("b"), Indent, Name("c"), Unindent, Unindent, Name("d") ];
+        let tokens = vec![Name("a"), Indent, Name("b"), Indent, Name("c"), Unindent, Unindent, Name("d")];
         lex_equal(code, tokens);
     }
 }
