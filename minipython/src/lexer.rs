@@ -280,4 +280,38 @@ mod tests {
         let tokens = vec![Def, Name("a"), OpenParen, Name("b"), Comma, Name("c"), Comma, Name("d"), CloseParen, Colon, Name("a"), PlusEqual, Literal(One)];
         lex_equal(code, tokens);
     }
+
+    #[test]
+    fn test_lexer_6() {
+        let code = "   a += 1";
+        let tokens = vec![ Indent, Name("a"), PlusEqual, Literal(One) ];
+        lex_equal(code, tokens);
+    }
+
+    #[test]
+    fn test_lexer_7() {
+        let code =
+            "def test(a, b):
+                a += 1
+                b -= 1
+                return a
+            c += 1
+            ";
+        let tokens =
+            vec![ Def, Name("test"), OpenParen, Name("a"), Comma, Name("b"), CloseParen, Colon,
+                  Indent, Name("a"), PlusEqual, Literal(One), Name("b"), MinusEqual, Literal(One), Return, Name("a"), Unindent, Name("c"), PlusEqual, Literal(One) ];
+        lex_equal(code, tokens);
+    }
+
+    #[test]
+    fn test_lexer_8() {
+        let code =
+            "a
+                b
+                    c
+            d
+            ";
+        let tokens = vec![ Name("a"), Indent, Name("b"), Indent, Name("c"), Unindent, Unindent, Name("d") ];
+        lex_equal(code, tokens);
+    }
 }
