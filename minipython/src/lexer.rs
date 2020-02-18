@@ -92,7 +92,8 @@ impl<'input> Lexer<'input> {
         Lexer {
             chars: input.chars().peekable(),
             input,
-            identation_level: 0,
+            indent_level: 0,
+            last_indent_level: 0,
             line: 1,
             pos: 0,
             col: 1,
