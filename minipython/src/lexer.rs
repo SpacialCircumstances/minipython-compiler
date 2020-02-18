@@ -173,7 +173,18 @@ impl<'input> Iterator for Lexer<'input> {
                             self.indent_level += 1;
                             if let Some(next) = self.chars.peek() {
                                 if *next != ' ' {
-                                    //TODO: Handle indent
+                                    let indent_diff = self.indent_level - self.last_indent_level;
+                                    if indent_diff != 0 {
+                                        let token_count = indent_diff.abs() / 4;
+                                        let tk = if indent_diff < 0 {
+                                            Unindent
+                                        } else {
+                                            Indent
+                                        };
+                                        for i in 0..token_count {
+                                            self.buffer.push(Ok((self.current_pos(), tk.clone(), self.current_pos())))
+                                        }
+                                    }
                                 }
                             }
                         }
