@@ -74,13 +74,16 @@ impl LexerError {
     }
 }
 
+type LexerResult<'input> = Spanned<Token<'input>, Location, LexerError>;
+
 pub struct Lexer<'input> {
     chars: Peekable<Chars<'input>>,
     input: &'input str,
     identation_level: i32,
     line: usize,
     pos: usize,
-    col: usize
+    col: usize,
+    buffer: Vec<LexerResult<'input>>
 }
 
 impl<'input> Lexer<'input> {
@@ -91,7 +94,8 @@ impl<'input> Lexer<'input> {
             identation_level: 0,
             line: 1,
             pos: 0,
-            col: 1
+            col: 1,
+            buffer: Vec::new()
         }
     }
 
@@ -148,53 +152,57 @@ fn is_separator(c: char) -> bool {
 }
 
 impl<'input> Iterator for Lexer<'input> {
-    type Item = Spanned<Token<'input>, Location, LexerError>;
+    type Item = LexerResult<'input>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
-            match self.chars.next() {
-                None => break None,
-                Some(c) => {
-                    match c {
-                        '\n' => {
-                            self.incr_line();
-                        }
-                        ' ' => {
-                            //TODO: Identation
-                            self.incr_pos();
-                        }
-                        '\t' => {
-                            let pos = self.current_pos();
-                            self.incr_pos();
-                            break Some(Err(LexerError::new(pos, LexerErrorKind::TabIdent)));
-                        }
-                        '\r' => self.incr_pos(),
-                        '#' => {
-                            self.incr_pos();
-                            self.comment()
-                        },
-                        _ => {
-                            let pos = self.current_pos();
-                            self.incr_pos();
-                            match single_char_token(c) {
-                                Some(tk) => {
-                                    break Some(Ok((pos, tk, self.current_pos())));
-                                },
-                                None => {
-                                    let mut curr = pos.pos;
-                                    while let Some(next) = self.chars.peek() {
-                                        if is_separator(*next) {
-                                            break;
-                                        } else {
-                                            self.incr_pos();
-                                            self.chars.next();
-                                            curr += 1;
+            if !self.buffer.is_empty() {
+                Some(self.buffer.pop());
+            } else {
+                match self.chars.next() {
+                    None => break None,
+                    Some(c) => {
+                        match c {
+                            '\n' => {
+                                self.incr_line();
+                            }
+                            ' ' => {
+                                //TODO: Identation
+                                self.incr_pos();
+                            }
+                            '\t' => {
+                                let pos = self.current_pos();
+                                self.incr_pos();
+                                break Some(Err(LexerError::new(pos, LexerErrorKind::TabIdent)));
+                            }
+                            '\r' => self.incr_pos(),
+                            '#' => {
+                                self.incr_pos();
+                                self.comment()
+                            },
+                            _ => {
+                                let pos = self.current_pos();
+                                self.incr_pos();
+                                match single_char_token(c) {
+                                    Some(tk) => {
+                                        break Some(Ok((pos, tk, self.current_pos())));
+                                    },
+                                    None => {
+                                        let mut curr = pos.pos;
+                                        while let Some(next) = self.chars.peek() {
+                                            if is_separator(*next) {
+                                                break;
+                                            } else {
+                                                self.incr_pos();
+                                                self.chars.next();
+                                                curr += 1;
+                                            }
                                         }
-                                    }
 
-                                    let lexeme = &self.input[pos.pos..=curr];
-                                    let token = Token::from_lexeme(lexeme);
-                                    break (Some(Ok((pos, token, self.current_pos()))));
+                                        let lexeme = &self.input[pos.pos..=curr];
+                                        let token = Token::from_lexeme(lexeme);
+                                        break (Some(Ok((pos, token, self.current_pos()))));
+                                    }
                                 }
                             }
                         }
