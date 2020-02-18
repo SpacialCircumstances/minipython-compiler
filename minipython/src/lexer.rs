@@ -8,11 +8,11 @@ pub type Spanned<Tok, Loc, Error> = Result<(Loc, Tok, Loc), Error>;
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum NumLiteral {
     Zero,
-    One
+    One,
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub enum Token<'a>  {
+pub enum Token<'a> {
     Input,
     Output,
     Comma,
@@ -28,7 +28,7 @@ pub enum Token<'a>  {
     NotEqual,
     Literal(NumLiteral),
     PlusEqual,
-    MinusEqual
+    MinusEqual,
 }
 
 impl<'a> Token<'a> {
@@ -51,7 +51,7 @@ impl<'a> Token<'a> {
 pub struct Location {
     line: usize,
     col: usize,
-    pos: usize
+    pos: usize,
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
@@ -62,14 +62,14 @@ pub enum LexerErrorKind {
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub struct LexerError {
     position: Location,
-    kind: LexerErrorKind
+    kind: LexerErrorKind,
 }
 
 impl LexerError {
     fn new(position: Location, kind: LexerErrorKind) -> Self {
         LexerError {
             kind,
-            position
+            position,
         }
     }
 }
@@ -81,10 +81,11 @@ pub struct Lexer<'input> {
     input: &'input str,
     last_indent_level: i32,
     indent_level: i32,
+    parse_indent: bool,
     line: usize,
     pos: usize,
     col: usize,
-    buffer: Vec<LexerResult<'input>>
+    buffer: Vec<LexerResult<'input>>,
 }
 
 impl<'input> Lexer<'input> {
@@ -97,7 +98,8 @@ impl<'input> Lexer<'input> {
             line: 1,
             pos: 0,
             col: 1,
-            buffer: Vec::new()
+            parse_indent: true,
+            buffer: Vec::new(),
         }
     }
 
@@ -105,7 +107,7 @@ impl<'input> Lexer<'input> {
         Location {
             pos: self.pos,
             line: self.line,
-            col: self.col
+            col: self.col,
         }
     }
 
@@ -113,6 +115,9 @@ impl<'input> Lexer<'input> {
         self.line += 1;
         self.col = 1;
         self.pos += 1;
+        self.parse_indent = true;
+        self.last_indent_level = self.indent_level;
+        self.indent_level = 0;
     }
 
     fn incr_pos(&mut self) {
@@ -163,47 +168,55 @@ impl<'input> Iterator for Lexer<'input> {
             } else {
                 match self.chars.next() {
                     None => break None,
+                    Some(' ') => {
+                        if self.parse_indent {
+                            self.indent_level += 1;
+                        }
+                        self.incr_pos();
+                    }
                     Some(c) => {
-                        match c {
-                            '\n' => {
-                                self.incr_line();
-                            }
-                            ' ' => {
-                                //TODO: Identation
-                                self.incr_pos();
-                            }
-                            '\t' => {
-                                let pos = self.current_pos();
-                                self.incr_pos();
-                                break Some(Err(LexerError::new(pos, LexerErrorKind::TabIdent)));
-                            }
-                            '\r' => self.incr_pos(),
-                            '#' => {
-                                self.incr_pos();
-                                self.comment()
-                            },
-                            _ => {
-                                let pos = self.current_pos();
-                                self.incr_pos();
-                                match single_char_token(c) {
-                                    Some(tk) => {
-                                        break Some(Ok((pos, tk, self.current_pos())));
-                                    },
-                                    None => {
-                                        let mut curr = pos.pos;
-                                        while let Some(next) = self.chars.peek() {
-                                            if is_separator(*next) {
-                                                break;
-                                            } else {
-                                                self.incr_pos();
-                                                self.chars.next();
-                                                curr += 1;
-                                            }
-                                        }
+                        if self.parse_indent {
+                            //TODO: Finish indent
+                            break None
+                        } else {
+                            match c {
+                                '\n' => {
+                                    self.incr_line();
+                                }
 
-                                        let lexeme = &self.input[pos.pos..=curr];
-                                        let token = Token::from_lexeme(lexeme);
-                                        break (Some(Ok((pos, token, self.current_pos()))));
+                                '\t' => {
+                                    let pos = self.current_pos();
+                                    self.incr_pos();
+                                    break Some(Err(LexerError::new(pos, LexerErrorKind::TabIdent)));
+                                }
+                                '\r' => self.incr_pos(),
+                                '#' => {
+                                    self.incr_pos();
+                                    self.comment()
+                                }
+                                _ => {
+                                    let pos = self.current_pos();
+                                    self.incr_pos();
+                                    match single_char_token(c) {
+                                        Some(tk) => {
+                                            break Some(Ok((pos, tk, self.current_pos())));
+                                        }
+                                        None => {
+                                            let mut curr = pos.pos;
+                                            while let Some(next) = self.chars.peek() {
+                                                if is_separator(*next) {
+                                                    break;
+                                                } else {
+                                                    self.incr_pos();
+                                                    self.chars.next();
+                                                    curr += 1;
+                                                }
+                                            }
+
+                                            let lexeme = &self.input[pos.pos..=curr];
+                                            let token = Token::from_lexeme(lexeme);
+                                            break (Some(Ok((pos, token, self.current_pos()))));
+                                        }
                                     }
                                 }
                             }
@@ -243,28 +256,28 @@ mod tests {
     #[test]
     fn test_lexer_2() {
         let code = "return x";
-        let tokens = vec![ Token::Return, Name("x") ];
+        let tokens = vec![Token::Return, Name("x")];
         lex_equal(code, tokens);
     }
 
     #[test]
     fn test_lexer_3() {
         let code = "a += 1 #test";
-        let tokens = vec![ Name("a"), PlusEqual, Literal(One) ];
+        let tokens = vec![Name("a"), PlusEqual, Literal(One)];
         lex_equal(code, tokens);
     }
 
     #[test]
     fn test_lexer_4() {
         let code = "input: a, b, c";
-        let tokens = vec![ Input, Colon, Name("a"), Comma, Name("b"), Comma, Name("c") ];
+        let tokens = vec![Input, Colon, Name("a"), Comma, Name("b"), Comma, Name("c")];
         lex_equal(code, tokens);
     }
 
     #[test]
     fn test_lexer_5() {
         let code = "def a(b, c, d): a += 1";
-        let tokens = vec![ Def, Name("a"), OpenParen, Name("b"), Comma, Name("c"), Comma, Name("d"), CloseParen, Colon, Name("a"), PlusEqual, Literal(One) ];
+        let tokens = vec![Def, Name("a"), OpenParen, Name("b"), Comma, Name("c"), Comma, Name("d"), CloseParen, Colon, Name("a"), PlusEqual, Literal(One)];
         lex_equal(code, tokens);
     }
 }
