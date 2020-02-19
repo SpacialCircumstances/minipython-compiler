@@ -162,10 +162,10 @@ impl<'input> Iterator for Lexer<'input> {
     type Item = LexerResult<'input>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        loop {
-            if !self.buffer.is_empty() {
-                Some(self.buffer.pop());
-            } else {
+        if !self.buffer.is_empty() {
+            Some(self.buffer.pop().unwrap())
+        } else {
+            loop {
                 match self.chars.next() {
                     None => break None,
                     Some(' ') => {
@@ -295,7 +295,6 @@ mod tests {
 
     #[test]
     fn test_lexer_6() {
-        let code = "   a += 1";
         let code = "    a += 1";
         let tokens = vec![Indent, Name("a"), PlusEqual, Literal(One)];
         lex_equal(code, tokens);
