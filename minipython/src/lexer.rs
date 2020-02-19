@@ -173,6 +173,7 @@ impl<'input> Iterator for Lexer<'input> {
                             self.indent_level += 1;
                             if let Some(next) = self.chars.peek() {
                                 if *next != ' ' {
+                                    self.parse_indent = false;
                                     let indent_diff = self.indent_level - self.last_indent_level;
                                     if indent_diff != 0 {
                                         let token_count = indent_diff.abs() / 4;
@@ -295,6 +296,7 @@ mod tests {
     #[test]
     fn test_lexer_6() {
         let code = "   a += 1";
+        let code = "    a += 1";
         let tokens = vec![Indent, Name("a"), PlusEqual, Literal(One)];
         lex_equal(code, tokens);
     }
