@@ -137,6 +137,24 @@ impl<'input> Lexer<'input> {
             }
         }
     }
+
+    fn handle_indent(&mut self) {
+        self.parse_indent = false;
+        let indent_diff = self.indent_level - self.last_indent_level;
+        if indent_diff != 0 {
+            let token_count = indent_diff.abs() / 4;
+            println!("Adding {} tokens", token_count);
+            let tk = if indent_diff < 0 {
+                Unindent
+            } else {
+                Indent
+            };
+            for i in 0..token_count {
+                println!("Add token");
+                self.buffer.push(Ok((self.current_pos(), tk.clone(), self.current_pos())))
+            }
+        }
+    }
 }
 
 fn single_char_token<'a>(c: char) -> Option<Token<'a>> {
@@ -173,28 +191,19 @@ impl<'input> Iterator for Lexer<'input> {
                             self.indent_level += 1;
                             if let Some(next) = self.chars.peek() {
                                 if *next != ' ' {
-                                    self.parse_indent = false;
-                                    let indent_diff = self.indent_level - self.last_indent_level;
-                                    println!("Indentation diff: {}, next: {}", indent_diff, next);
-                                    if indent_diff != 0 {
-                                        let token_count = indent_diff.abs() / 4;
-                                        println!("Adding {} tokens", token_count);
-                                        let tk = if indent_diff < 0 {
-                                            Unindent
-                                        } else {
-                                            Indent
-                                        };
-                                        for i in 0..token_count {
-                                            println!("Add token");
-                                            self.buffer.push(Ok((self.current_pos(), tk.clone(), self.current_pos())))
-                                        }
-                                    }
+                                    self.handle_indent();
                                 }
                             }
                         }
                         self.incr_pos();
                     }
                     Some(c) => {
+                        if self.parse_indent {
+                            self.handle_indent();
+                            if !self.buffer.is_empty() {
+                                break Some(self.buffer.pop().unwrap());
+                            }
+                        }
                         match c {
                             '\n' => {
                                 self.incr_line();
@@ -307,11 +316,11 @@ mod tests {
     fn test_lexer_7() {
         let code =
             "def test(a, b):
-                a += 1
-                b -= 1
-                return a
-            c += 1
-            ";
+    a += 1
+    b -= 1
+    return a
+c += 1
+";
         let tokens =
             vec![Def, Name("test"), OpenParen, Name("a"), Comma, Name("b"), CloseParen, Colon,
                  Indent, Name("a"), PlusEqual, Literal(One), Name("b"), MinusEqual, Literal(One), Return, Name("a"), Unindent, Name("c"), PlusEqual, Literal(One)];
@@ -322,10 +331,9 @@ mod tests {
     fn test_lexer_8() {
         let code =
             "a
-                b
-                    c
-            d
-            ";
+    b
+        c
+d";
         let tokens = vec![Name("a"), Indent, Name("b"), Indent, Name("c"), Unindent, Unindent, Name("d")];
         lex_equal(code, tokens);
     }
