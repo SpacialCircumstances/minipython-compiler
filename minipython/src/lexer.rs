@@ -162,10 +162,10 @@ impl<'input> Iterator for Lexer<'input> {
     type Item = LexerResult<'input>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if !self.buffer.is_empty() {
-            Some(self.buffer.pop().unwrap())
-        } else {
-            loop {
+        loop {
+            if !self.buffer.is_empty() {
+                break Some(self.buffer.pop().unwrap());
+            } else {
                 match self.chars.next() {
                     None => break None,
                     Some(' ') => {
@@ -175,14 +175,17 @@ impl<'input> Iterator for Lexer<'input> {
                                 if *next != ' ' {
                                     self.parse_indent = false;
                                     let indent_diff = self.indent_level - self.last_indent_level;
+                                    println!("Indentation diff: {}, next: {}", indent_diff, next);
                                     if indent_diff != 0 {
                                         let token_count = indent_diff.abs() / 4;
+                                        println!("Adding {} tokens", token_count);
                                         let tk = if indent_diff < 0 {
                                             Unindent
                                         } else {
                                             Indent
                                         };
                                         for i in 0..token_count {
+                                            println!("Add token");
                                             self.buffer.push(Ok((self.current_pos(), tk.clone(), self.current_pos())))
                                         }
                                     }
