@@ -251,26 +251,27 @@ impl<'input> Iterator for Lexer<'input> {
             if !self.buffer.is_empty() {
                 break Some(self.buffer.pop().unwrap());
             } else {
+                if self.parse_indent {
+                    match self.chars.peek() {
+                        None => (),
+                        Some(' ') => (),
+                        Some(_) => {
+                            self.handle_indent();
+                        }
+                    }
+                    if !self.buffer.is_empty() {
+                        break Some(self.buffer.pop().unwrap());
+                    }
+                }
                 match self.chars.next() {
                     None => break None,
                     Some(' ') => {
                         if self.parse_indent {
                             self.indent_level += 1;
-                            if let Some(next) = self.chars.peek() {
-                                if *next != ' ' {
-                                    self.handle_indent();
-                                }
-                            }
                         }
                         self.incr_pos();
                     }
                     Some(c) => {
-                        if self.parse_indent {
-                            self.handle_indent();
-                            if !self.buffer.is_empty() {
-                                break Some(self.buffer.pop().unwrap());
-                            }
-                        }
                         match c {
                             '\n' => {
                                 self.incr_line();
