@@ -2,6 +2,7 @@ use std::str::{CharIndices, Chars};
 use crate::lexer::Token::*;
 use std::collections::HashSet;
 use std::iter::Peekable;
+use crate::lexer::LexerErrorKind::Unrecognized;
 
 pub type Spanned<Tok, Loc, Error> = Result<(Loc, Tok, Loc), Error>;
 
@@ -47,7 +48,7 @@ pub struct Location {
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum LexerErrorKind {
     TabIdent,
-    Unrecognized
+    Unrecognized,
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
@@ -147,16 +148,81 @@ impl<'input> Lexer<'input> {
         }
     }
 
+    fn advance(&mut self) -> Option<char> {
+        match self.chars.next() {
+            None => None,
+            Some('\n') => {
+                self.incr_line();
+                Some('\n')
+            },
+            Some(x) => {
+                self.incr_pos();
+                Some(x)
+            }
+        }
+    }
+
     fn not_eq_zero(&mut self) -> Option<LexerResult<'input>> {
-        None
+        let start = self.current_pos();
+        self.incr_pos();
+        match self.advance() {
+            Some('=') => {
+                while let Some(' ') = self.chars.peek() {
+                    self.advance();
+                }
+                match self.advance() {
+                    Some('0') => {
+                        Some(Ok((start, NotEqualZero, self.current_pos())))
+                    }
+                    Some(_) => Some(Err(LexerError::new(self.current_pos(), Unrecognized))),
+                    None => None
+                }
+            },
+            Some(_) => Some(Err(LexerError::new(self.current_pos(), Unrecognized))),
+            None => None
+        }
     }
 
     fn plus_eq_one(&mut self) -> Option<LexerResult<'input>> {
-        None
+        let start = self.current_pos();
+        self.incr_pos();
+        match self.advance() {
+            Some('=') => {
+                while let Some(' ') = self.chars.peek() {
+                    self.advance();
+                }
+                match self.advance() {
+                    Some('1') => {
+                        Some(Ok((start, PlusEqualOne, self.current_pos())))
+                    }
+                    Some(_) => Some(Err(LexerError::new(self.current_pos(), Unrecognized))),
+                    None => None
+                }
+            },
+            Some(_) => Some(Err(LexerError::new(self.current_pos(), Unrecognized))),
+            None => None
+        }
     }
 
     fn minus_eq_one(&mut self) -> Option<LexerResult<'input>> {
-        None
+        let start = self.current_pos();
+        self.incr_pos();
+        match self.advance() {
+            Some('=') => {
+                while let Some(' ') = self.chars.peek() {
+                    self.advance();
+                }
+                match self.advance() {
+                    Some('1') => {
+                        Some(Ok((start, MinusEqualOne, self.current_pos())))
+                    }
+                    Some(_) => Some(Err(LexerError::new(self.current_pos(), Unrecognized))),
+                    None => None
+                }
+            },
+            Some(_) => Some(Err(LexerError::new(self.current_pos(), Unrecognized))),
+            None => None
+        }
     }
 }
 
@@ -214,24 +280,21 @@ impl<'input> Iterator for Lexer<'input> {
                                 let pos = self.current_pos();
                                 self.incr_pos();
                                 break Some(Err(LexerError::new(pos, LexerErrorKind::TabIdent)));
-                            },
+                            }
                             '\r' => self.incr_pos(),
                             '#' => {
                                 self.incr_pos();
                                 self.comment()
-                            },
+                            }
                             '!' => {
-                                self.incr_pos();
-                                break self.not_eq_zero()
-                            },
+                                break self.not_eq_zero();
+                            }
                             '+' => {
-                                self.incr_pos();
-                                break self.plus_eq_one()
-                            },
+                                break self.plus_eq_one();
+                            }
                             '-' => {
-                                self.incr_pos();
-                                break self.minus_eq_one()
-                            },
+                                break self.minus_eq_one();
+                            }
                             _ => {
                                 let pos = self.current_pos();
                                 self.incr_pos();
