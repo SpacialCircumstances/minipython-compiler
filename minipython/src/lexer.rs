@@ -5,12 +5,6 @@ use std::iter::Peekable;
 
 pub type Spanned<Tok, Loc, Error> = Result<(Loc, Tok, Loc), Error>;
 
-#[derive(Debug, Eq, PartialEq, Clone, Copy)]
-pub enum NumLiteral {
-    Zero,
-    One,
-}
-
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Token<'a> {
     Input,
@@ -25,10 +19,9 @@ pub enum Token<'a> {
     OpenParen,
     CloseParen,
     While,
-    NotEqual,
-    Literal(NumLiteral),
-    PlusEqual,
-    MinusEqual,
+    NotEqualZero,
+    PlusEqualOne,
+    MinusEqualOne,
 }
 
 impl<'a> Token<'a> {
@@ -39,9 +32,6 @@ impl<'a> Token<'a> {
             "output" => Output,
             "def" => Def,
             "return" => Return,
-            "!=" => NotEqual,
-            "+=" => PlusEqual,
-            "-=" => MinusEqual,
             _ => Name(lexeme)
         }
     }
@@ -56,7 +46,8 @@ pub struct Location {
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum LexerErrorKind {
-    TabIdent
+    TabIdent,
+    Unrecognized
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
@@ -155,6 +146,18 @@ impl<'input> Lexer<'input> {
             }
         }
     }
+
+    fn not_eq_zero(&mut self) -> Option<LexerResult<'input>> {
+        None
+    }
+
+    fn plus_eq_one(&mut self) -> Option<LexerResult<'input>> {
+        None
+    }
+
+    fn minus_eq_one(&mut self) -> Option<LexerResult<'input>> {
+        None
+    }
 }
 
 fn single_char_token<'a>(c: char) -> Option<Token<'a>> {
@@ -163,8 +166,6 @@ fn single_char_token<'a>(c: char) -> Option<Token<'a>> {
         ',' => Some(Comma),
         '(' => Some(OpenParen),
         ')' => Some(CloseParen),
-        '0' => Some(Literal(NumLiteral::Zero)),
-        '1' => Some(Literal(NumLiteral::One)),
         _ => None
     }
 }
@@ -213,12 +214,24 @@ impl<'input> Iterator for Lexer<'input> {
                                 let pos = self.current_pos();
                                 self.incr_pos();
                                 break Some(Err(LexerError::new(pos, LexerErrorKind::TabIdent)));
-                            }
+                            },
                             '\r' => self.incr_pos(),
                             '#' => {
                                 self.incr_pos();
                                 self.comment()
-                            }
+                            },
+                            '!' => {
+                                self.incr_pos();
+                                break self.not_eq_zero()
+                            },
+                            '+' => {
+                                self.incr_pos();
+                                break self.plus_eq_one()
+                            },
+                            '-' => {
+                                self.incr_pos();
+                                break self.minus_eq_one()
+                            },
                             _ => {
                                 let pos = self.current_pos();
                                 self.incr_pos();
@@ -254,9 +267,8 @@ impl<'input> Iterator for Lexer<'input> {
 
 #[cfg(test)]
 mod tests {
-    use crate::lexer::{Token, NumLiteral, Lexer, Spanned, Location, LexerError};
+    use crate::lexer::{Token, Lexer, Spanned, Location, LexerError};
     use crate::lexer::Token::*;
-    use crate::lexer::NumLiteral::*;
 
     fn lex_equal(code: &str, tokens: Vec<Token>) {
         let lexer = Lexer::new(code);
@@ -270,8 +282,7 @@ mod tests {
         let tokens = vec![
             While,
             Name("a"),
-            NotEqual,
-            Literal(Zero),
+            NotEqualZero,
             Colon
         ];
         lex_equal(code, tokens);
@@ -287,7 +298,7 @@ mod tests {
     #[test]
     fn test_lexer_3() {
         let code = "a += 1 #test";
-        let tokens = vec![Name("a"), PlusEqual, Literal(One)];
+        let tokens = vec![Name("a"), PlusEqualOne];
         lex_equal(code, tokens);
     }
 
@@ -301,14 +312,14 @@ mod tests {
     #[test]
     fn test_lexer_5() {
         let code = "def a(b, c, d): a += 1";
-        let tokens = vec![Def, Name("a"), OpenParen, Name("b"), Comma, Name("c"), Comma, Name("d"), CloseParen, Colon, Name("a"), PlusEqual, Literal(One)];
+        let tokens = vec![Def, Name("a"), OpenParen, Name("b"), Comma, Name("c"), Comma, Name("d"), CloseParen, Colon, Name("a"), PlusEqualOne];
         lex_equal(code, tokens);
     }
 
     #[test]
     fn test_lexer_6() {
         let code = "    a += 1";
-        let tokens = vec![Indent, Name("a"), PlusEqual, Literal(One)];
+        let tokens = vec![Indent, Name("a"), PlusEqualOne];
         lex_equal(code, tokens);
     }
 
@@ -323,7 +334,7 @@ c += 1
 ";
         let tokens =
             vec![Def, Name("test"), OpenParen, Name("a"), Comma, Name("b"), CloseParen, Colon,
-                 Indent, Name("a"), PlusEqual, Literal(One), Name("b"), MinusEqual, Literal(One), Return, Name("a"), Unindent, Name("c"), PlusEqual, Literal(One)];
+                 Indent, Name("a"), PlusEqualOne, Name("b"), MinusEqualOne, Return, Name("a"), Unindent, Name("c"), PlusEqualOne];
         lex_equal(code, tokens);
     }
 
