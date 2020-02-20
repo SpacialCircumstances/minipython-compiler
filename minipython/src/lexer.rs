@@ -135,14 +135,12 @@ impl<'input> Lexer<'input> {
         let indent_diff = self.indent_level - self.last_indent_level;
         if indent_diff != 0 {
             let token_count = indent_diff.abs() / 4;
-            println!("Adding {} tokens", token_count);
             let tk = if indent_diff < 0 {
                 Unindent
             } else {
                 Indent
             };
             for i in 0..token_count {
-                println!("Add token");
                 self.buffer.push(Ok((self.current_pos(), tk.clone(), self.current_pos())))
             }
         }
