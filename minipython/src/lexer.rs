@@ -412,6 +412,7 @@ mod tests {
             "def test(a, b):
     a += 1
     b -= 1
+    #now return the stuff
     return a
 c += 1
 ";
@@ -426,7 +427,8 @@ c += 1
         let code =
             "a
     b
-        c
+        c #test
+    #asdf
 d";
         let tokens = vec![Name("a"), Indent, Name("b"), Indent, Name("c"), Unindent, Unindent, Name("d")];
         lex_equal(code, tokens);
