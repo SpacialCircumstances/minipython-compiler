@@ -45,12 +45,57 @@ mod tests {
 ";
         let (store, res) = parse_block(code);
         assert!(res.is_ok(), "{:#?}", res);
-        let expected = vec![ While {
+        let expected = vec![While {
             cond_var: store.by_index(0).unwrap(),
             body: vec![
                 Decr { var_name: store.by_index(0).unwrap() }
-            ]
-        } ];
+            ],
+        }];
+        assert_eq!(res.unwrap(), expected);
+    }
+
+    #[test]
+    fn test_functions() {
+        let code =
+            "def add(a, b):
+    while a != 0:
+        a-=1
+        b += 1
+    return b
+x+=1
+y+=1
+z=add(x, y)";
+        let (store, res) = parse_block(code);
+        assert!(res.is_ok(), "{:#?}", res);
+        let add_var = store.get_by_interned("add").unwrap();
+        let a_var = store.get_by_interned("a").unwrap();
+        let b_var = store.get_by_interned("b").unwrap();
+        let x_var = store.get_by_interned("x").unwrap();
+        let y_var = store.get_by_interned("y").unwrap();
+        let z_var = store.get_by_interned("z").unwrap();
+        let expected = vec![Def {
+            name: add_var,
+            parameters: vec![a_var, b_var],
+            body: vec![
+                While {
+                    cond_var: a_var,
+                    body: vec![
+                        Decr { var_name: a_var },
+                        Incr { var_name: b_var }
+                    ],
+                },
+                Return {
+                    name: b_var
+                }
+            ],
+        },
+                            Incr { var_name: x_var },
+                            Incr { var_name: y_var },
+                            Assign {
+                                var_name: z_var,
+                                fun_name: add_var,
+                                args: vec![x_var, y_var],
+                            }];
         assert_eq!(res.unwrap(), expected);
     }
 }
