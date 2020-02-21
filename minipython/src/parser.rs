@@ -106,4 +106,28 @@ z=add(x, y)";
                             }];
         assert_eq!(res.unwrap(), expected);
     }
+
+    #[test]
+    fn test_program() {
+        let code =
+            "input: x, y
+output: y
+while x!=0:
+    x-=1
+    y+=1
+";
+        let (store, res) = parse_program(code);
+        assert!(res.is_ok(), "{:#?}", res);
+        let x_var = store.get_by_interned("x").unwrap();
+        let y_var = store.get_by_interned("y").unwrap();
+        let expected = Program {
+            inputs: vec![x_var, y_var],
+            output: y_var,
+            body: vec! [ While {
+                cond_var: x_var,
+                body: vec! [Decr { var_name: x_var }, Incr { var_name: y_var }]
+            }]
+        };
+        assert_eq!(res.unwrap(), expected);
+    }
 }
