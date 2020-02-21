@@ -252,13 +252,14 @@ fn single_char_token<'a>(c: char) -> Option<Token<'a>> {
         ',' => Some(Comma),
         '(' => Some(OpenParen),
         ')' => Some(CloseParen),
+        '=' => Some(Equal),
         _ => None
     }
 }
 
 fn is_separator(c: char) -> bool {
     match c {
-        ':' | ',' | ' ' | '\n' | '\t' | '\r' | '(' | ')' | '!' | '+' | '-' | '#' => true,
+        ':' | ',' | ' ' | '\n' | '\t' | '\r' | '(' | ')' | '!' | '+' | '-' | '#' | '=' => true,
         _ => false
     }
 }
