@@ -53,9 +53,9 @@ Output: Name = "output" ":" <Name>;
 pub Block: Vec<Ast> = Expr*;
 
 Expr: Ast = {
-    <Name> "+=1" => Ast::Incr { var_name: <> },
-    <Name> "-=1" => Ast::Decr { var_name: <> },
-    "return" <Name> => Ast::Return { name: <> },
+    <Name> "+=1" => Ast::Incr(<>),
+    <Name> "-=1" => Ast::Decr(<>),
+    "return" <Name> => Ast::Return(<>),
     WhileExpr,
     Def,
     Assign

@@ -30,9 +30,7 @@ mod tests {
         let code = "a+=1";
         let (store, res) = parse_block(code);
         assert!(res.is_ok(), "{:#?}", res);
-        let expected = vec![Incr {
-            var_name: store.by_index(0).unwrap()
-        }];
+        let expected = vec![Incr (store.by_index(0).unwrap())];
         assert_eq!(res.unwrap(), expected);
     }
 
@@ -41,7 +39,7 @@ mod tests {
         let code = "return x";
         let (store, res) = parse_block(code);
         assert!(res.is_ok(), "{:#?}", res);
-        let expected = vec![Return { name: store.by_index(0).unwrap() }];
+        let expected = vec![Return(store.by_index(0).unwrap())];
         assert_eq!(res.unwrap(), expected);
     }
 
@@ -56,7 +54,7 @@ mod tests {
         let expected = vec![While {
             cond_var: store.by_index(0).unwrap(),
             body: vec![
-                Decr { var_name: store.by_index(0).unwrap() }
+                Decr(store.by_index(0).unwrap())
             ],
         }];
         assert_eq!(res.unwrap(), expected);
@@ -88,17 +86,15 @@ z=add(x, y)";
                 While {
                     cond_var: a_var,
                     body: vec![
-                        Decr { var_name: a_var },
-                        Incr { var_name: b_var }
+                        Decr(a_var),
+                        Incr(b_var)
                     ],
                 },
-                Return {
-                    name: b_var
-                }
+                Return(b_var)
             ],
         },
-                            Incr { var_name: x_var },
-                            Incr { var_name: y_var },
+                            Incr(x_var),
+                            Incr(y_var),
                             Assign {
                                 var_name: z_var,
                                 fun_name: add_var,
@@ -125,7 +121,7 @@ while x!=0:
             output: y_var,
             body: vec! [ While {
                 cond_var: x_var,
-                body: vec! [Decr { var_name: x_var }, Incr { var_name: y_var }]
+                body: vec! [Decr(x_var), Incr(y_var)]
             }]
         };
         assert_eq!(res.unwrap(), expected);
