@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Error};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]

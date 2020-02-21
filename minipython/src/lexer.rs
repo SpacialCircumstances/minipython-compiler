@@ -1,9 +1,8 @@
-use std::str::{CharIndices, Chars};
+use std::str::Chars;
 use crate::lexer::Token::*;
-use std::collections::HashSet;
 use std::iter::Peekable;
 use crate::lexer::LexerErrorKind::Unrecognized;
-use std::fmt::{Display, Formatter, Error};
+use std::fmt::{Display, Formatter};
 
 pub type Spanned<Tok, Loc, Error> = Result<(Loc, Tok, Loc), Error>;
 
@@ -162,7 +161,7 @@ impl<'input> Lexer<'input> {
             } else {
                 Indent
             };
-            for i in 0..token_count {
+            for _ in 0..token_count {
                 self.buffer.push(Ok((self.current_pos(), tk.clone(), self.current_pos())))
             }
         }
@@ -351,7 +350,7 @@ impl<'input> Iterator for Lexer<'input> {
 
 #[cfg(test)]
 mod tests {
-    use crate::lexer::{Token, Lexer, Spanned, Location, LexerError};
+    use crate::lexer::{Token, Lexer};
     use crate::lexer::Token::*;
 
     fn lex_equal(code: &str, tokens: Vec<Token>) {
