@@ -29,6 +29,17 @@ extern {
     }
 }
 
+Comma<T>: Vec<T> = {
+    <v:(<T> ",")*> <e:T?> => match e {
+        None => v,
+        Some(e) => {
+            let mut v = v;
+            v.push(e);
+            v
+        }
+    }
+};
+
 pub Block: Vec<Ast> = Expr*;
 
 Expr: Ast = {

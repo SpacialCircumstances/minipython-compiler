@@ -4,7 +4,7 @@ use crate::lexer::Lexer;
 
 lalrpop_mod!(pub minipython);
 
-fn parse(code: &str) -> (NameStore, Result<Vec<Ast>, String>) {
+fn parse_block(code: &str) -> (NameStore, Result<Vec<Ast>, String>) {
     let mut name_store = NameStore::new();
     let parser = minipython::BlockParser::new();
     let lexer = Lexer::new(code);
@@ -20,7 +20,7 @@ mod tests {
     #[test]
     fn test_incr_decr() {
         let code = "a+=1";
-        let (store, res) = parse(code);
+        let (store, res) = parse_block(code);
         assert!(res.is_ok(), "{:#?}", res);
         let expected = vec![Incr {
             var_name: store.by_index(0).unwrap()
@@ -31,7 +31,7 @@ mod tests {
     #[test]
     fn test_return() {
         let code = "return x";
-        let (store, res) = parse(code);
+        let (store, res) = parse_block(code);
         assert!(res.is_ok(), "{:#?}", res);
         let expected = vec![Return { name: store.by_index(0).unwrap() }];
         assert_eq!(res.unwrap(), expected);
@@ -43,7 +43,7 @@ mod tests {
             "while x != 0:
     x-=1
 ";
-        let (store, res) = parse(code);
+        let (store, res) = parse_block(code);
         assert!(res.is_ok(), "{:#?}", res);
         let expected = vec![ While {
             cond_var: store.by_index(0).unwrap(),
