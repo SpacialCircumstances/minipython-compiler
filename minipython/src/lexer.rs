@@ -450,7 +450,8 @@ z=add(x, y)
 z2 = add(a, c)";
         let tokens = vec![Def, Name("add"), OpenParen, Name("a"), Comma, Name("b"), CloseParen, Colon, Indent,
                           While, Name("a"), NotEqualZero, Colon, Indent, Name("a"), MinusEqualOne, Name("b"), PlusEqualOne, Unindent, Return, Name("b"),
-                          Unindent, Name("x"), PlusEqualOne, Name("y"), MinusEqualOne, Name("z"), Equal, Name("add"), OpenParen, Name("x"), Comma, Name("y"),
+                          Unindent, Name("x"), PlusEqualOne, Name("y"), PlusEqualOne, Name("z"), Equal, Name("add"), OpenParen, Name("x"), Comma, Name("y"),
                           CloseParen, Name("z2"), Equal, Name("add"), OpenParen, Name("a"), Comma, Name("c"), CloseParen];
+        lex_equal(code, tokens);
     }
 }
