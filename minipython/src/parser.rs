@@ -36,4 +36,21 @@ mod tests {
         let expected = vec![Return { name: store.by_index(0).unwrap() }];
         assert_eq!(res.unwrap(), expected);
     }
+
+    #[test]
+    fn test_while() {
+        let code =
+            "while x != 0:
+    x-=1
+#a";
+        let (store, res) = parse(code);
+        assert!(res.is_ok(), "{:#?}", res);
+        let expected = vec![ While {
+            cond_var: store.by_index(0).unwrap(),
+            body: vec![
+                Decr { var_name: store.by_index(0).unwrap() }
+            ]
+        } ];
+        assert_eq!(res.unwrap(), expected);
+    }
 }
