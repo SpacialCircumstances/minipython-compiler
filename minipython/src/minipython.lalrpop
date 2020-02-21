@@ -25,6 +25,7 @@ extern {
         "!=0" => NotEqualZero,
         "+=1" => PlusEqualOne,
         "-=1" => MinusEqualOne,
+        "=" => Equal
     }
 }
 

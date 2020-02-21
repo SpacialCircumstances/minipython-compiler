@@ -23,6 +23,7 @@ pub enum Token<'a> {
     NotEqualZero,
     PlusEqualOne,
     MinusEqualOne,
+    Equal
 }
 
 impl<'input> Display for Token<'input> {
