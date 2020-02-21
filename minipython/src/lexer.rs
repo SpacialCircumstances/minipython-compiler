@@ -3,6 +3,7 @@ use crate::lexer::Token::*;
 use std::collections::HashSet;
 use std::iter::Peekable;
 use crate::lexer::LexerErrorKind::Unrecognized;
+use std::fmt::{Display, Formatter, Error};
 
 pub type Spanned<Tok, Loc, Error> = Result<(Loc, Tok, Loc), Error>;
 
@@ -25,6 +26,12 @@ pub enum Token<'a> {
     MinusEqualOne,
 }
 
+impl<'input> Display for Token<'input> {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 impl<'a> Token<'a> {
     fn from_lexeme(lexeme: &'a str) -> Token {
         match lexeme {
@@ -45,9 +52,15 @@ pub struct Location {
     pos: usize,
 }
 
+impl Display for Location {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        write!(f, "Line: {}, Col: {}", self.line, self.col)
+    }
+}
+
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum LexerErrorKind {
-    TabIdent,
+    TabIndent,
     Unrecognized,
 }
 
@@ -55,6 +68,15 @@ pub enum LexerErrorKind {
 pub struct LexerError {
     position: Location,
     kind: LexerErrorKind,
+}
+
+impl Display for LexerError {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        match self.kind {
+            LexerErrorKind::TabIndent => write!(f, "Tab indentation not allowed in: {}", self.position),
+            LexerErrorKind::Unrecognized => write!(f, "Unrecognized token in: {}", self.position)
+        }
+    }
 }
 
 impl LexerError {
@@ -278,7 +300,7 @@ impl<'input> Iterator for Lexer<'input> {
                             '\t' => {
                                 let pos = self.current_pos();
                                 self.incr_pos();
-                                break Some(Err(LexerError::new(pos, LexerErrorKind::TabIdent)));
+                                break Some(Err(LexerError::new(pos, LexerErrorKind::TabIndent)));
                             }
                             '\r' => self.incr_pos(),
                             '#' => {
