@@ -9,3 +9,10 @@ pub enum Ast {
     Incr { var_name: Name },
     Decr { var_name: Name }
 }
+
+#[derive(Debug, Eq, PartialEq)]
+pub struct Program {
+    pub body: Vec<Ast>,
+    pub inputs: Vec<Name>,
+    pub output: Name
+}
