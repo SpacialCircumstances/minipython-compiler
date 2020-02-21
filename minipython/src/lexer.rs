@@ -292,9 +292,10 @@ impl<'input> Iterator for Lexer<'input> {
                     None => {
                         let missing_unindents = self.indent_count;
                         if missing_unindents > 0 {
-                            for _ in 0..(self.indent_count) {
+                            for _ in 0..(missing_unindents) {
                                 self.buffer.push(Ok((self.current_pos(), Unindent, self.current_pos())))
                             }
+                            self.indent_count = 0;
                         } else {
                             break None
                         }
