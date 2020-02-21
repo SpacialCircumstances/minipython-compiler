@@ -46,9 +46,17 @@ Expr: Ast = {
     <Name> "+=1" => Ast::Incr { var_name: <> },
     <Name> "-=1" => Ast::Decr { var_name: <> },
     "return" <Name> => Ast::Return { name: <> },
-    WhileExpr
+    WhileExpr,
+    Def,
+    Assign
 };
 
-WhileExpr: Ast = "while" <n:Name> "!=0" ":" "indent" <p: Expr+> "unindent" => Ast::While { cond_var: n, body: p };
+WhileExpr: Ast = "while" <n:Name> "!=0" ":" "indent" <p:Expr+> "unindent" => Ast::While { cond_var: n, body: p };
+
+Assign: Ast = <vname:Name> "=" <fname:Name> "(" <args:ArgList> ")" => Ast::Assign { var_name: vname, fun_name: fname, args: args };
+
+Def: Ast = "def" <fname:Name> "(" <params:ArgList> ")" ":" "indent" <p:Expr+> "unindent" => Ast::Def { name: fname, parameters: params, body: p };
+
+ArgList: Vec<Name> = Comma<Name>;
 
 Name: Name = "name" => names.register(<>);
