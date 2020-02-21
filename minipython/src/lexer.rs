@@ -99,6 +99,7 @@ pub struct Lexer<'input> {
     line: usize,
     pos: usize,
     col: usize,
+    indent_count: u32,
     buffer: Vec<LexerResult<'input>>,
 }
 
@@ -113,6 +114,7 @@ impl<'input> Lexer<'input> {
             pos: 0,
             col: 1,
             parse_indent: true,
+            indent_count: 0,
             buffer: Vec::new(),
         }
     }
@@ -158,8 +160,10 @@ impl<'input> Lexer<'input> {
         if indent_diff != 0 {
             let token_count = indent_diff.abs() / 4;
             let tk = if indent_diff < 0 {
+                self.indent_count -= token_count as u32;
                 Unindent
             } else {
+                self.indent_count += token_count as u32;
                 Indent
             };
             for _ in 0..token_count {
@@ -285,7 +289,16 @@ impl<'input> Iterator for Lexer<'input> {
                     }
                 }
                 match self.chars.next() {
-                    None => break None,
+                    None => {
+                        let missing_unindents = self.indent_count;
+                        if missing_unindents > 0 {
+                            for _ in 0..(self.indent_count) {
+                                self.buffer.push(Ok((self.current_pos(), Unindent, self.current_pos())))
+                            }
+                        } else {
+                            break None
+                        }
+                    },
                     Some(' ') => {
                         if self.parse_indent {
                             self.indent_level += 1;
