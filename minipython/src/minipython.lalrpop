@@ -1,7 +1,32 @@
 use crate::ast::Ast;
 use crate::name::{Name, NameStore};
+use crate::lexer::{Token, Location, LexerError};
+use crate::lexer::Token::*;
 
-grammar(names: &mut NameStore);
+grammar<'input>(input: &'input str, names: &mut NameStore);
+
+extern {
+    type Location = Location;
+    type Error = LexerError;
+
+    enum Token<'input> {
+        "input" => Input,
+        "output" => Output,
+        "," => Comma,
+        "indent" => Indent,
+        "unindent" => Unindent,
+        "return" => Return,
+        "def" => Def,
+        ":" => Colon,
+        "name" => Name(<&'input str>),
+        "(" => OpenParen,
+        ")" => CloseParen,
+        "while" => While,
+        "!=0" => NotEqualZero,
+        "+=1" => PlusEqualOne,
+        "-=1" => MinusEqualOne,
+    }
+}
 
 pub Program: Vec<Ast> = Expr*;
 
@@ -10,4 +35,4 @@ Expr: Ast = {
     <Name> "-=1" => Ast::Decr { var_name: <> }
 };
 
-Name: Name = r"\w*" => names.register(<>);
+Name: Name = "name" => names.register(<>);

@@ -1,12 +1,14 @@
 use crate::ast::*;
 use crate::name::*;
+use crate::lexer::Lexer;
 
 lalrpop_mod!(pub minipython);
 
 fn parse(code: &str) -> (NameStore, Result<Vec<Ast>, String>) {
     let mut name_store = NameStore::new();
     let parser = minipython::ProgramParser::new();
-    let res = parser.parse(&mut name_store, code).map_err(|e| format!("{}", e));
+    let lexer = Lexer::new(code);
+    let res = parser.parse(code, &mut name_store, lexer).map_err(|e| format!("{}", e));
     (name_store, res)
 }
 
