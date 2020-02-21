@@ -29,12 +29,15 @@ extern {
     }
 }
 
-pub Program: Vec<Ast> = Expr*;
+pub Block: Vec<Ast> = Expr*;
 
 Expr: Ast = {
     <Name> "+=1" => Ast::Incr { var_name: <> },
     <Name> "-=1" => Ast::Decr { var_name: <> },
-    "return" <Name> => Ast::Return { name: <> }
+    "return" <Name> => Ast::Return { name: <> },
+    WhileExpr
 };
+
+WhileExpr: Ast = "while" <n:Name> "!=0" ":" "indent" <p: Expr+> "unindent" => Ast::While { cond_var: n, body: p };
 
 Name: Name = "name" => names.register(<>);

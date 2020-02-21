@@ -6,7 +6,7 @@ lalrpop_mod!(pub minipython);
 
 fn parse(code: &str) -> (NameStore, Result<Vec<Ast>, String>) {
     let mut name_store = NameStore::new();
-    let parser = minipython::ProgramParser::new();
+    let parser = minipython::BlockParser::new();
     let lexer = Lexer::new(code);
     let res = parser.parse(code, &mut name_store, lexer).map_err(|e| format!("{}", e));
     (name_store, res)
@@ -42,7 +42,7 @@ mod tests {
         let code =
             "while x != 0:
     x-=1
-#a";
+";
         let (store, res) = parse(code);
         assert!(res.is_ok(), "{:#?}", res);
         let expected = vec![ While {
