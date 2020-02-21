@@ -21,10 +21,10 @@ mod tests {
     fn test_incr_decr() {
         let code = "a+=1";
         let (store, res) = parse(code);
+        assert!(res.is_ok(), "{:#?}", res);
         let expected = vec![Incr {
             var_name: store.by_index(0).unwrap()
         }];
-        assert!(res.is_ok());
         assert_eq!(res.unwrap(), expected);
     }
 }
