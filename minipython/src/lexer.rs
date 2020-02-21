@@ -417,7 +417,7 @@ mod tests {
     #[test]
     fn test_lexer_6() {
         let code = "    a += 1";
-        let tokens = vec![Indent, Name("a"), PlusEqualOne];
+        let tokens = vec![Indent, Name("a"), PlusEqualOne, Unindent];
         lex_equal(code, tokens);
     }
 
