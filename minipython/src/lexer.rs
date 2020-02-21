@@ -193,11 +193,11 @@ impl<'input> Lexer<'input> {
                     Some('0') => {
                         Some(Ok((start, NotEqualZero, self.current_pos())))
                     }
-                    Some(_) => Some(Err(LexerError::new(self.current_pos(), Unrecognized))),
+                    Some(_) => Some(Err(LexerError::new(start, Unrecognized))),
                     None => None
                 }
             },
-            Some(_) => Some(Err(LexerError::new(self.current_pos(), Unrecognized))),
+            Some(_) => Some(Err(LexerError::new(start, Unrecognized))),
             None => None
         }
     }
@@ -214,11 +214,11 @@ impl<'input> Lexer<'input> {
                     Some('1') => {
                         Some(Ok((start, PlusEqualOne, self.current_pos())))
                     }
-                    Some(_) => Some(Err(LexerError::new(self.current_pos(), Unrecognized))),
+                    Some(_) => Some(Err(LexerError::new(start, Unrecognized))),
                     None => None
                 }
             },
-            Some(_) => Some(Err(LexerError::new(self.current_pos(), Unrecognized))),
+            Some(_) => Some(Err(LexerError::new(start, Unrecognized))),
             None => None
         }
     }
@@ -235,11 +235,11 @@ impl<'input> Lexer<'input> {
                     Some('1') => {
                         Some(Ok((start, MinusEqualOne, self.current_pos())))
                     }
-                    Some(_) => Some(Err(LexerError::new(self.current_pos(), Unrecognized))),
+                    Some(_) => Some(Err(LexerError::new(start, Unrecognized))),
                     None => None
                 }
             },
-            Some(_) => Some(Err(LexerError::new(self.current_pos(), Unrecognized))),
+            Some(_) => Some(Err(LexerError::new(start, Unrecognized))),
             None => None
         }
     }
