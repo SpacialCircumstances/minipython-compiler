@@ -45,7 +45,7 @@ impl<'a> Token<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Default)]
 pub struct Location {
     line: usize,
     col: usize,
