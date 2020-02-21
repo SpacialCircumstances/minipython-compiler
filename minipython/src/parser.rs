@@ -15,7 +15,7 @@ fn parse(code: &str) -> (NameStore, Result<Vec<Ast>, String>) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast::Ast::Incr;
+    use crate::ast::Ast::*;
 
     #[test]
     fn test_incr_decr() {
@@ -25,6 +25,15 @@ mod tests {
         let expected = vec![Incr {
             var_name: store.by_index(0).unwrap()
         }];
+        assert_eq!(res.unwrap(), expected);
+    }
+
+    #[test]
+    fn test_return() {
+        let code = "return x";
+        let (store, res) = parse(code);
+        assert!(res.is_ok(), "{:#?}", res);
+        let expected = vec![Return { name: store.by_index(0).unwrap() }];
         assert_eq!(res.unwrap(), expected);
     }
 }
