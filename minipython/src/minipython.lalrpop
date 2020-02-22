@@ -1,5 +1,5 @@
 use crate::ast::{Ast, Program};
-use crate::name::{Name, NameStore};
+use crate::name::{InternedName, NameStore};
 use crate::lexer::{Token, Location, LexerError};
 use crate::lexer::Token::*;
 
@@ -46,9 +46,9 @@ pub Program: Program = <ins:Input> <outs:Output> <body:Block> => Program {
     body: body
 };
 
-Input: Vec<Name> = "input" ":" <ArgList>;
+Input: Vec<InternedName> = "input" ":" <ArgList>;
 
-Output: Name = "output" ":" <Name>;
+Output: InternedName = "output" ":" <Name>;
 
 pub Block: Vec<Ast> = Expr*;
 
@@ -67,6 +67,6 @@ Assign: Ast = <vname:Name> "=" <fname:Name> "(" <args:ArgList> ")" => Ast::Assig
 
 Def: Ast = "def" <fname:Name> "(" <params:ArgList> ")" ":" "indent" <p:Expr+> "unindent" => Ast::Def { name: fname, parameters: params, body: p };
 
-ArgList: Vec<Name> = Comma<Name>;
+ArgList: Vec<InternedName> = Comma<Name>;
 
-Name: Name = "name" => names.register(<>);
+Name: InternedName = "name" => names.register(<>);

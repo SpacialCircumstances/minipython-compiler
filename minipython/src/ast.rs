@@ -1,18 +1,18 @@
-use crate::name::Name;
+use crate::name::InternedName;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum Ast {
-    Def { name: Name, parameters: Vec<Name>, body: Vec<Ast> },
-    Return(Name),
-    While { cond_var: Name, body: Vec<Ast> },
-    Assign { var_name: Name, fun_name: Name, args: Vec<Name> },
-    Incr(Name),
-    Decr(Name)
+    Def { name: InternedName, parameters: Vec<InternedName>, body: Vec<Ast> },
+    Return(InternedName),
+    While { cond_var: InternedName, body: Vec<Ast> },
+    Assign { var_name: InternedName, fun_name: InternedName, args: Vec<InternedName> },
+    Incr(InternedName),
+    Decr(InternedName)
 }
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct Program {
     pub body: Vec<Ast>,
-    pub inputs: Vec<Name>,
-    pub output: Name
+    pub inputs: Vec<InternedName>,
+    pub output: InternedName
 }
