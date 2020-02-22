@@ -6,3 +6,4 @@ edition = "2018"
 
 [dependencies]
 minipython = { path = "../minipython" }
+clap = "2.33.0"
