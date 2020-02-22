@@ -21,6 +21,8 @@ pub enum IRStatement {
 }
 
 pub struct IRProgram {
+    inputs: Vec<Value>,
+    output: Value,
     functions: Vec<IRFunction>,
     main: Vec<IRStatement>
 }
