@@ -1,4 +1,7 @@
 use crate::value::Value;
+use crate::name::*;
+use crate::ast::*;
+use crate::ast::Ast::*;
 
 pub struct IRFunction {
     params: Vec<Value>,
@@ -25,4 +28,8 @@ pub struct IRProgram {
     output: Value,
     functions: Vec<IRFunction>,
     main: Vec<IRStatement>
+}
+
+fn convert_program_to_ir(program: Program, name_store: NameStore) -> Result<IRProgram, String> {
+    Err(String::from("Not implemented"))
 }
