@@ -14,7 +14,7 @@ fn parse_program(code: &str) -> (NameStore, Result<Program, String>) {
 
 fn parse_block(code: &str) -> (NameStore, Result<Vec<Ast>, String>) {
     let mut name_store = NameStore::new();
-    let parser = minipython::BlockParser::new();
+    let parser = minipython::TopLevelBlockParser::new();
     let lexer = Lexer::new(code);
     let res = parser.parse(code, &mut name_store, lexer).map_err(|e| format!("{}", e));
     (name_store, res)

@@ -40,32 +40,45 @@ Comma<T>: Vec<T> = {
     }
 };
 
-pub Program: Program = <ins:Input> <outs:Output> <body:Block> => Program {
+pub Program: Program = <ins:Input> <outs:Output> <body:TopLevelBlock> => Program {
     inputs: ins,
     output: outs,
     body: body
 };
 
+pub TopLevelBlock: Vec<Ast> = TopLevelExpr*;
+
 Input: Vec<InternedName> = "input" ":" <ArgList>;
 
 Output: InternedName = "output" ":" <Name>;
 
-pub Block: Vec<Ast> = Expr*;
-
-Expr: Ast = {
-    <Name> "+=1" => Ast::Incr(<>),
-    <Name> "-=1" => Ast::Decr(<>),
-    "return" <Name> => Ast::Return(<>),
-    WhileExpr,
+TopLevelExpr: Ast = {
+    Incr,
+    Decr,
+    While,
     Def,
+    Assign
+}
+
+FunctionLevelExpr: Ast = {
+    Incr,
+    Decr,
+    Return,
+    While,
     Assign
 };
 
-WhileExpr: Ast = "while" <n:Name> "!=0" ":" "indent" <p:Expr+> "unindent" => Ast::While { cond_var: n, body: p };
+Return: Ast = "return" <Name> => Ast::Return(<>);
+
+Incr: Ast = <Name> "+=1" => Ast::Incr(<>);
+
+Decr: Ast = <Name> "-=1" => Ast::Decr(<>);
+
+While: Ast = "while" <n:Name> "!=0" ":" "indent" <p:FunctionLevelExpr+> "unindent" => Ast::While { cond_var: n, body: p };
 
 Assign: Ast = <vname:Name> "=" <fname:Name> "(" <args:ArgList> ")" => Ast::Assign { var_name: vname, fun_name: fname, args: args };
 
-Def: Ast = "def" <fname:Name> "(" <params:ArgList> ")" ":" "indent" <p:Expr+> "unindent" => Ast::Def { name: fname, parameters: params, body: p };
+Def: Ast = "def" <fname:Name> "(" <params:ArgList> ")" ":" "indent" <p:FunctionLevelExpr+> "unindent" => Ast::Def { name: fname, parameters: params, body: p };
 
 ArgList: Vec<InternedName> = Comma<Name>;
 
