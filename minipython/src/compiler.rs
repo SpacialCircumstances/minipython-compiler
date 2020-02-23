@@ -21,7 +21,8 @@ impl<'a> CompilerInstance<'a> {
 
     pub fn run(&mut self) -> Result<(), String> {
         let code = fs::read_to_string(self.input_file).map_err(|e| format!("{}", e))?;
-        let (name_store, ast) = parser::parse_program(&code);
+        let (name_store, ast_res) = parser::parse_program(&code);
+        let ast = ast_res?;
         Ok(())
     }
 }

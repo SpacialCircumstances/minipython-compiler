@@ -20,13 +20,17 @@ fn parse_args<'a>() -> ArgMatches<'a> {
         .get_matches()
 }
 
-fn main() {
-    let matches = parse_args();
+fn compile(matches: ArgMatches) -> Result<(), String> {
     let input_file_name = matches.value_of("INPUT").unwrap();
     let input_path = Path::new(input_file_name);
     let output_file_path = matches.value_of("out").map(|f| Path::new(f)).unwrap();
-    let mut compiler = CompilerInstance::new(input_path, output_file_path).unwrap();
-    match compiler.run() {
+    let mut compiler = CompilerInstance::new(input_path, output_file_path)?;
+    compiler.run()
+}
+
+fn main() {
+    let matches = parse_args();
+    match compile(matches) {
         Ok(()) => println!("Compilation successful!"),
         Err(e) => println!("Compilation failed: {}", e)
     }
