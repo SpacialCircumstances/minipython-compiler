@@ -1,4 +1,6 @@
 use std::path::Path;
+use std::fs;
+use crate::parser;
 
 pub struct CompilerInstance<'a> {
     input_file: &'a Path,
@@ -15,5 +17,11 @@ impl<'a> CompilerInstance<'a> {
         } else {
             Err(String::from(format!("Input file {} does not exist", input_file.display())))
         }
+    }
+
+    pub fn run(&mut self) -> Result<(), String> {
+        let code = fs::read_to_string(self.input_file).map_err(|e| format!("{}", e))?;
+        let (name_store, ast) = parser::parse_program(&code);
+        Ok(())
     }
 }

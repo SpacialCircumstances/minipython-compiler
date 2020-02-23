@@ -4,7 +4,7 @@ use crate::lexer::Lexer;
 
 lalrpop_mod!(pub minipython);
 
-fn parse_program(code: &str) -> (NameStore, Result<Program, String>) {
+pub fn parse_program(code: &str) -> (NameStore, Result<Program, String>) {
     let mut name_store = NameStore::new();
     let parser = minipython::ProgramParser::new();
     let lexer = Lexer::new(code);
