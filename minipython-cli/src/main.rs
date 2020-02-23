@@ -25,5 +25,9 @@ fn main() {
     let input_file_name = matches.value_of("INPUT").unwrap();
     let input_path = Path::new(input_file_name);
     let output_file_path = matches.value_of("out").map(|f| Path::new(f)).unwrap();
-    let compiler = CompilerInstance::new(input_path, output_file_path).unwrap();
+    let mut compiler = CompilerInstance::new(input_path, output_file_path).unwrap();
+    match compiler.run() {
+        Ok(()) => println!("Compilation successful!"),
+        Err(e) => println!("Compilation failed: {}", e)
+    }
 }
