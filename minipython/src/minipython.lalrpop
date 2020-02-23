@@ -53,10 +53,14 @@ Input: Vec<InternedName> = "input" ":" <ArgList>;
 Output: InternedName = "output" ":" <Name>;
 
 TopLevelExpr: Ast = {
+    TopLevelStatement,
+    Def
+}
+
+TopLevelStatement: Ast = {
     Incr,
     Decr,
-    While,
-    Def,
+    TopLevelWhile,
     Assign
 }
 
@@ -73,6 +77,8 @@ Return: Ast = "return" <Name> => Ast::Return(<>);
 Incr: Ast = <Name> "+=1" => Ast::Incr(<>);
 
 Decr: Ast = <Name> "-=1" => Ast::Decr(<>);
+
+TopLevelWhile: Ast = "while" <n:Name> "!=0" ":" "indent" <p:TopLevelStatement+> "unindent" => Ast::While { cond_var: n, body: p };
 
 While: Ast = "while" <n:Name> "!=0" ":" "indent" <p:FunctionLevelExpr+> "unindent" => Ast::While { cond_var: n, body: p };
 
