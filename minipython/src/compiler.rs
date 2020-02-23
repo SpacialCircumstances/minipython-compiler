@@ -24,7 +24,7 @@ impl<'a> CompilerInstance<'a> {
         let code = fs::read_to_string(self.input_file).map_err(|e| format!("{}", e))?;
         let (name_store, ast_res) = parser::parse_program(&code);
         let ast = ast_res?;
-        let ir = ir::convert_program_to_ir(ast, &name_store)?;
+        let ir = ir::convert_program_to_ir(&ast, &name_store)?;
         Ok(())
     }
 }

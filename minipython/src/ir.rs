@@ -3,11 +3,13 @@ use crate::name::*;
 use crate::ast::*;
 use crate::ast::Ast::*;
 
+#[derive(Debug, Eq, PartialEq)]
 pub struct IRFunction {
     params: Vec<Value>,
     body: Vec<IRStatement>
 }
 
+#[derive(Debug, Eq, PartialEq)]
 pub enum IRStatement {
     ValueCreate(Value),
     ValueModify(Value, i64),
@@ -23,6 +25,7 @@ pub enum IRStatement {
     Return(Value)
 }
 
+#[derive(Debug, Eq, PartialEq)]
 pub struct IRProgram {
     inputs: Vec<Value>,
     output: Value,
@@ -30,6 +33,6 @@ pub struct IRProgram {
     main: Vec<IRStatement>
 }
 
-pub fn convert_program_to_ir(program: Program, name_store: &NameStore) -> Result<IRProgram, String> {
+pub fn convert_program_to_ir(program: &Program, name_store: &NameStore) -> Result<IRProgram, String> {
     Err(String::from("Not implemented"))
 }
