@@ -1,4 +1,6 @@
 use clap::{App, Arg, ArgMatches};
+use minipython::compiler::CompilerInstance;
+use std::path::Path;
 
 fn parse_args<'a>() -> ArgMatches<'a> {
     App::new("MiniPython compiler")
@@ -8,7 +10,7 @@ fn parse_args<'a>() -> ArgMatches<'a> {
             .long("out")
             .help("Sets the output file name")
             .value_name("FILE")
-            .required(false)
+            .required(true)
             .takes_value(true))
         .arg(Arg::with_name("INPUT")
             .help("Input file")
@@ -20,5 +22,8 @@ fn parse_args<'a>() -> ArgMatches<'a> {
 
 fn main() {
     let matches = parse_args();
-    println!("Hello, world!");
+    let input_file_name = matches.value_of("INPUT").unwrap();
+    let input_path = Path::new(input_file_name);
+    let output_file_path = matches.value_of("out").map(|f| Path::new(f)).unwrap();
+    let compiler = CompilerInstance::new(input_path, output_file_path).unwrap();
 }

@@ -6,4 +6,4 @@ mod lexer;
 mod parser;
 mod value;
 mod ir;
-mod compiler;
+pub mod compiler;

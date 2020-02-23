@@ -6,7 +6,7 @@ pub struct CompilerInstance<'a> {
 }
 
 impl<'a> CompilerInstance<'a> {
-    fn new(input_file: &'a Path, output_file: &'a Path) -> Result<CompilerInstance<'a>, String> {
+    pub fn new(input_file: &'a Path, output_file: &'a Path) -> Result<CompilerInstance<'a>, String> {
         if input_file.exists() {
             Ok(CompilerInstance {
                 input_file,
