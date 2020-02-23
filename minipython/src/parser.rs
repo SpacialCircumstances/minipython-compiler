@@ -35,15 +35,6 @@ mod tests {
     }
 
     #[test]
-    fn test_return() {
-        let code = "return x";
-        let (store, res) = parse_block(code);
-        assert!(res.is_ok(), "{:#?}", res);
-        let expected = vec![Return(store.by_index(0).unwrap())];
-        assert_eq!(res.unwrap(), expected);
-    }
-
-    #[test]
     fn test_while() {
         let code =
             "while x != 0:
