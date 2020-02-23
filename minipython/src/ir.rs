@@ -30,6 +30,6 @@ pub struct IRProgram {
     main: Vec<IRStatement>
 }
 
-fn convert_program_to_ir(program: Program, name_store: NameStore) -> Result<IRProgram, String> {
+pub fn convert_program_to_ir(program: Program, name_store: &NameStore) -> Result<IRProgram, String> {
     Err(String::from("Not implemented"))
 }
