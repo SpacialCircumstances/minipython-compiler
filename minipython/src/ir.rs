@@ -2,18 +2,18 @@ use crate::value::Value;
 use crate::name::*;
 use crate::ast::*;
 use crate::ast::Ast::*;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct IRFunction {
     params: Vec<Value>,
-    body: IRBlock
+    body: IRBlock,
 }
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct IRBlock {
     values: Vec<Value>,
-    body: Vec<IRStatement>
+    body: Vec<IRStatement>,
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -22,13 +22,13 @@ pub enum IRStatement {
     FunctionCall {
         func: IRFunction,
         args: Vec<Value>,
-        target: Value
+        target: Value,
     },
     Loop {
         condition_var: Value,
-        body: Vec<IRStatement>
+        body: Vec<IRStatement>,
     },
-    Return(Value)
+    Return(Value),
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -36,11 +36,11 @@ pub struct IRProgram {
     inputs: Vec<Value>,
     output: Value,
     functions: HashMap<InternedName, IRFunction>,
-    main: IRBlock
+    main: IRBlock,
 }
 
 struct Context {
-next_id: u64
+    next_id: u64
 }
 
 impl Context {
@@ -57,7 +57,7 @@ impl Context {
     }
 }
 
-fn convert_block(ctx: &mut Context, statements: &Vec<&Ast>) -> IRBlock {
+fn convert_block(ctx: &mut Context, statements: &Vec<&Ast>, mut existing_values: HashSet<&Value>) -> IRBlock {
     unimplemented!()
 }
 
@@ -67,7 +67,7 @@ fn convert_function(ctx: &mut Context, parameters: &Vec<InternedName>, body: &Ve
 
 pub fn convert_program_to_ir(program: &Program, name_store: &NameStore) -> Result<IRProgram, String> {
     let mut ctx = Context::root();
-    let inputs = program.inputs.iter().map(|n| ctx.new_value(*n)).collect();
+    let inputs: Vec<Value> = program.inputs.iter().map(|n| ctx.new_value(*n)).collect();
     let output = ctx.new_value(program.output);
     let mut functions = HashMap::new();
     let mut statements = Vec::new();
@@ -76,20 +76,20 @@ pub fn convert_program_to_ir(program: &Program, name_store: &NameStore) -> Resul
         match expr {
             Def { name, parameters, body } => {
                 functions.insert(*name, convert_function(&mut ctx, parameters, body));
-            },
+            }
             _ => {
                 statements.push(expr)
             }
         }
     }
 
-    let block = convert_block(&mut ctx, &statements);
+    let block = convert_block(&mut ctx, &statements, inputs.iter().collect());
 
     let program = IRProgram {
         inputs,
         output,
         functions,
-        main: block
+        main: block,
     };
 
     Ok(program)
