@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter, Error};
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct InternedName(usize);
 
 impl Display for InternedName {

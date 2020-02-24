@@ -2,6 +2,7 @@ use crate::value::Value;
 use crate::name::*;
 use crate::ast::*;
 use crate::ast::Ast::*;
+use std::collections::HashMap;
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct IRFunction {
@@ -34,10 +35,62 @@ pub enum IRStatement {
 pub struct IRProgram {
     inputs: Vec<Value>,
     output: Value,
-    functions: Vec<IRFunction>,
+    functions: HashMap<InternedName, IRFunction>,
     main: IRBlock
 }
 
+struct Context {
+next_id: u64
+}
+
+impl Context {
+    fn root() -> Self {
+        Context {
+            next_id: 0
+        }
+    }
+
+    fn new_value(&mut self, name: InternedName) -> Value {
+        let val = Value::new(self.next_id, name);
+        self.next_id += 1;
+        val
+    }
+}
+
+fn convert_block(ctx: &mut Context, statements: &Vec<&Ast>) -> IRBlock {
+    unimplemented!()
+}
+
+fn convert_function(ctx: &mut Context, parameters: &Vec<InternedName>, body: &Vec<Ast>) -> IRFunction {
+    unimplemented!()
+}
+
 pub fn convert_program_to_ir(program: &Program, name_store: &NameStore) -> Result<IRProgram, String> {
-    Err(String::from("Not implemented"))
+    let mut ctx = Context::root();
+    let inputs = program.inputs.iter().map(|n| ctx.new_value(*n)).collect();
+    let output = ctx.new_value(program.output);
+    let mut functions = HashMap::new();
+    let mut statements = Vec::new();
+
+    for expr in &program.body {
+        match expr {
+            Def { name, parameters, body } => {
+                functions.insert(*name, convert_function(&mut ctx, parameters, body));
+            },
+            _ => {
+                statements.push(expr)
+            }
+        }
+    }
+
+    let block = convert_block(&mut ctx, &statements);
+
+    let program = IRProgram {
+        inputs,
+        output,
+        functions,
+        main: block
+    };
+
+    Ok(program)
 }
