@@ -3,6 +3,7 @@ use crate::name::*;
 use crate::ast::*;
 use crate::ast::Ast::*;
 use std::collections::{HashMap, HashSet};
+use crate::ir::IRStatement::ValueModify;
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct IRFunction {
@@ -40,13 +41,15 @@ pub struct IRProgram {
 }
 
 struct Context {
-    next_id: u64
+    next_id: u64,
+    context: HashMap<InternedName, Value>
 }
 
 impl Context {
     fn root() -> Self {
         Context {
-            next_id: 0
+            next_id: 0,
+            context: HashMap::new()
         }
     }
 
@@ -55,9 +58,36 @@ impl Context {
         self.next_id += 1;
         val
     }
+
+    fn lookup_or_create(&mut self, name: &InternedName) -> Value {
+        match self.context.get(name) {
+            Some(&v) => v,
+            None => {
+                let v = self.new_value(*name);
+                self.context.insert(*name, v);
+                v
+            }
+        }
+    }
 }
 
-fn convert_block(ctx: &mut Context, statements: &Vec<&Ast>, mut existing_values: HashSet<&Value>) -> IRBlock {
+fn convert_block(ctx: &mut Context, statements: &Vec<&Ast>) -> IRBlock {
+    let mut ir = Vec::new();
+
+    //TODO: Optimizations
+    for &statement in statements {
+        match statement {
+            Incr(name) => {
+                let v = ctx.lookup_or_create(name);
+                ir.push(ValueModify(v, 1));
+            }
+            Decr(name) => {
+                let v = ctx.lookup_or_create(name);
+                ir.push(ValueModify(v, -1));
+            }
+            _ => panic!("Unexpected statement")
+        }
+    }
     unimplemented!()
 }
 
@@ -83,7 +113,7 @@ pub fn convert_program_to_ir(program: &Program, name_store: &NameStore) -> Resul
         }
     }
 
-    let block = convert_block(&mut ctx, &statements, inputs.iter().collect());
+    let block = convert_block(&mut ctx, &statements);
 
     let program = IRProgram {
         inputs,
