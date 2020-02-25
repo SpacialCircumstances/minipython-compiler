@@ -128,6 +128,11 @@ fn convert_statements(ctx: &mut Context, statements: &Vec<Ast>) -> Vec<IRStateme
                 let v = ctx.lookup_or_create(name);
                 opt.decr(v);
             }
+            Return(name) => {
+                opt.flush(&mut ir);
+                let v = ctx.lookup_or_create(name);
+                ir.push(IRStatement::Return(v));
+            }
             _ => panic!("Unexpected statement")
         }
     }
