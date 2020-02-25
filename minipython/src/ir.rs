@@ -85,19 +85,48 @@ impl Context {
     }
 }
 
+struct OptimizationContext {
+    values: HashMap<Value, i64>
+}
+
+impl OptimizationContext {
+    fn new() -> Self {
+        OptimizationContext {
+            values: HashMap::new()
+        }
+    }
+
+    fn incr(&mut self, v: Value) {
+        let old = self.values.get_mut(&v).unwrap();
+        *old += 1;
+    }
+
+    fn decr(&mut self, v: Value) {
+        let old = self.values.get_mut(&v).unwrap();
+        *old -= 1;
+    }
+
+    fn flush(&mut self, target: &mut Vec<IRStatement>) {
+        for (&val, &modification) in &self.values {
+            target.push(ValueModify(val, modification));
+        }
+        self.values.clear();
+    }
+}
+
 fn convert_statements(ctx: &mut Context, statements: &Vec<Ast>) -> Vec<IRStatement> {
     let mut ir = Vec::new();
+    let mut opt = OptimizationContext::new();
 
-    //TODO: Optimizations
     for statement in statements {
         match statement {
             Incr(name) => {
                 let v = ctx.lookup_or_create(name);
-                ir.push(ValueModify(v, 1));
+                opt.incr(v);
             }
             Decr(name) => {
                 let v = ctx.lookup_or_create(name);
-                ir.push(ValueModify(v, -1));
+                opt.decr(v);
             }
             _ => panic!("Unexpected statement")
         }
