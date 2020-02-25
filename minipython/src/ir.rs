@@ -71,11 +71,11 @@ impl Context {
     }
 }
 
-fn convert_block(ctx: &mut Context, statements: &Vec<&Ast>) -> IRBlock {
+fn convert_block(ctx: &mut Context, statements: &Vec<Ast>) -> IRBlock {
     let mut ir = Vec::new();
 
     //TODO: Optimizations
-    for &statement in statements {
+    for statement in statements {
         match statement {
             Incr(name) => {
                 let v = ctx.lookup_or_create(name);
@@ -92,7 +92,10 @@ fn convert_block(ctx: &mut Context, statements: &Vec<&Ast>) -> IRBlock {
 }
 
 fn convert_function(ctx: &mut Context, parameters: &Vec<InternedName>, body: &Vec<Ast>) -> IRFunction {
-    unimplemented!()
+    IRFunction {
+        params: parameters.iter().map(|&n| ctx.new_value(n)).collect(),
+        body: convert_block(ctx, body)
+    }
 }
 
 pub fn convert_program_to_ir(program: &Program, name_store: &NameStore) -> Result<IRProgram, String> {
@@ -100,7 +103,7 @@ pub fn convert_program_to_ir(program: &Program, name_store: &NameStore) -> Resul
     let inputs: Vec<Value> = program.inputs.iter().map(|n| ctx.new_value(*n)).collect();
     let output = ctx.new_value(program.output);
     let mut functions = HashMap::new();
-    let mut statements = Vec::new();
+    let mut statements: Vec<Ast> = Vec::new();
 
     for expr in &program.body {
         match expr {
@@ -108,7 +111,7 @@ pub fn convert_program_to_ir(program: &Program, name_store: &NameStore) -> Resul
                 functions.insert(*name, convert_function(&mut ctx, parameters, body));
             }
             _ => {
-                statements.push(expr)
+                statements.push(expr.clone())
             }
         }
     }

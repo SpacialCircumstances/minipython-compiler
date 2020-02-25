@@ -1,6 +1,6 @@
 use crate::name::InternedName;
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Ast {
     Def { name: InternedName, parameters: Vec<InternedName>, body: Vec<Ast> },
     Return(InternedName),
@@ -10,7 +10,7 @@ pub enum Ast {
     Decr(InternedName)
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Program {
     pub body: Vec<Ast>,
     pub inputs: Vec<InternedName>,
