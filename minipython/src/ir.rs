@@ -68,9 +68,13 @@ impl Context {
             }
         }
     }
+
+    fn get_context_values(&self) -> Vec<Value> {
+        self.context.iter().map(|(_, &v)| v).collect()
+    }
 }
 
-fn convert_block(ctx: &mut Context, statements: &Vec<Ast>) -> IRBlock {
+fn convert_statements(ctx: &mut Context, statements: &Vec<Ast>) -> Vec<IRStatement> {
     let mut ir = Vec::new();
 
     //TODO: Optimizations
@@ -87,7 +91,16 @@ fn convert_block(ctx: &mut Context, statements: &Vec<Ast>) -> IRBlock {
             _ => panic!("Unexpected statement")
         }
     }
-    unimplemented!()
+
+    ir
+}
+
+fn convert_block(ctx: &mut Context, statements: &Vec<Ast>) -> IRBlock {
+    let ir_statements = convert_statements(ctx, statements);
+    IRBlock {
+        values: ctx.get_context_values(),
+        body: ir_statements
+    }
 }
 
 fn convert_function(ctx: &mut Context, parameters: &Vec<InternedName>, body: &Vec<Ast>) -> IRFunction {
