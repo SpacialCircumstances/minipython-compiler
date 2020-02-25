@@ -56,6 +56,7 @@ impl Context {
     fn new_value(&mut self, name: InternedName) -> Value {
         let val = Value::new(self.next_id, name);
         self.next_id += 1;
+        self.context.insert(name, val);
         val
     }
 
@@ -63,9 +64,7 @@ impl Context {
         match self.context.get(name) {
             Some(&v) => v,
             None => {
-                let v = self.new_value(*name);
-                self.context.insert(*name, v);
-                v
+                self.new_value(*name)
             }
         }
     }
