@@ -4,6 +4,9 @@ use crate::ast::*;
 use crate::ast::Ast::*;
 use std::collections::{HashMap, HashSet};
 use crate::ir::IRStatement::ValueModify;
+use std::rc::Rc;
+use std::ops::Deref;
+use std::borrow::BorrowMut;
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct IRFunction {
@@ -41,21 +44,29 @@ pub struct IRProgram {
 }
 
 struct Context {
-    next_id: u64,
+    next_id: Rc<u64>,
     context: HashMap<InternedName, Value>
 }
 
 impl Context {
     fn root() -> Self {
         Context {
-            next_id: 0,
+            next_id: Rc::new(0),
+            context: HashMap::new()
+        }
+    }
+
+    fn create_subcontext(&mut self) -> Self {
+        Context {
+            next_id: self.next_id.clone(),
             context: HashMap::new()
         }
     }
 
     fn new_value(&mut self, name: InternedName) -> Value {
-        let val = Value::new(self.next_id, name);
-        self.next_id += 1;
+        let counter = Rc::get_mut(&mut self.next_id).unwrap();
+        let val = Value::new(*counter, name);
+        *counter += 1;
         self.context.insert(name, val);
         val
     }
@@ -104,9 +115,10 @@ fn convert_block(ctx: &mut Context, statements: &Vec<Ast>) -> IRBlock {
 }
 
 fn convert_function(ctx: &mut Context, parameters: &Vec<InternedName>, body: &Vec<Ast>) -> IRFunction {
+    let mut func_ctx = ctx.create_subcontext();
     IRFunction {
-        params: parameters.iter().map(|&n| ctx.new_value(n)).collect(),
-        body: convert_block(ctx, body)
+        params: parameters.iter().map(|&n| func_ctx.new_value(n)).collect(),
+        body: convert_block(&mut func_ctx, body)
     }
 }
 
