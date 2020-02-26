@@ -97,12 +97,12 @@ impl OptimizationContext {
     }
 
     fn incr(&mut self, v: Value) {
-        let old = self.values.get_mut(&v).unwrap();
+        let old = self.values.entry(v).or_insert(0);
         *old += 1;
     }
 
     fn decr(&mut self, v: Value) {
-        let old = self.values.get_mut(&v).unwrap();
+        let old = self.values.entry(v).or_insert(0);
         *old -= 1;
     }
 
