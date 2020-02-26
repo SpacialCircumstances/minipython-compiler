@@ -43,9 +43,15 @@ pub struct IRProgram {
     main: IRBlock,
 }
 
+#[derive(Eq, PartialEq, Clone, Copy, Debug)]
+enum ValueKind {
+    IO,
+    Normal
+}
+
 struct Context {
     next_id: Rc<u64>,
-    context: HashMap<InternedName, Value>
+    context: HashMap<InternedName, (ValueKind, Value)>
 }
 
 impl Context {
@@ -67,13 +73,21 @@ impl Context {
         let counter = Rc::get_mut(&mut self.next_id).unwrap();
         let val = Value::new(*counter, name);
         *counter += 1;
-        self.context.insert(name, val);
+        self.context.insert(name, (ValueKind::Normal, val));
+        val
+    }
+
+    fn new_io_value(&mut self, name: InternedName) -> Value {
+        let counter = Rc::get_mut(&mut self.next_id).unwrap();
+        let val = Value::new(*counter, name);
+        *counter += 1;
+        self.context.insert(name, (ValueKind::IO, val));
         val
     }
 
     fn lookup_or_create(&mut self, name: &InternedName) -> Value {
         match self.context.get(name) {
-            Some(&v) => v,
+            Some((_, v)) => *v,
             None => {
                 self.new_value(*name)
             }
@@ -81,7 +95,10 @@ impl Context {
     }
 
     fn get_context_values(&self) -> Vec<Value> {
-        self.context.iter().map(|(_, &v)| v).collect()
+        self.context.iter().filter_map(|(_, (vk, v))| match vk {
+            ValueKind::Normal => Some(*v),
+            ValueKind::IO => None
+        }).collect()
     }
 }
 
@@ -177,8 +194,8 @@ fn convert_function(ctx: &mut Context, parameters: &Vec<InternedName>, body: &Ve
 
 pub fn convert_program_to_ir(program: &Program, name_store: &NameStore) -> Result<IRProgram, String> {
     let mut ctx = Context::root();
-    let inputs: Vec<Value> = program.inputs.iter().map(|n| ctx.new_value(*n)).collect();
-    let output = ctx.new_value(program.output);
+    let inputs: Vec<Value> = program.inputs.iter().map(|n| ctx.new_io_value(*n)).collect();
+    let output = ctx.new_io_value(program.output);
     let mut functions = HashMap::new();
     let mut statements: Vec<Ast> = Vec::new();
 
