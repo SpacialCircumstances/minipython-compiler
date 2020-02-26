@@ -3,7 +3,7 @@ use crate::name::*;
 use crate::ast::*;
 use crate::ast::Ast::*;
 use std::collections::{HashMap, HashSet};
-use crate::ir::IRStatement::ValueModify;
+use crate::ir::IRStatement::{ValueModify, FunctionCall};
 use std::rc::Rc;
 use std::ops::Deref;
 use std::borrow::BorrowMut;
@@ -24,7 +24,7 @@ pub struct IRBlock {
 pub enum IRStatement {
     ValueModify(Value, i64),
     FunctionCall {
-        func: IRFunction,
+        func: InternedName,
         args: Vec<Value>,
         target: Value,
     },
@@ -132,6 +132,17 @@ fn convert_statements(ctx: &mut Context, statements: &Vec<Ast>) -> Vec<IRStateme
                 opt.flush(&mut ir);
                 let v = ctx.lookup_or_create(name);
                 ir.push(IRStatement::Return(v));
+            }
+            Assign { var_name, fun_name, args } => {
+                //We only *need* to flush variables used in the statement
+                opt.flush(&mut ir);
+                let args_values = args.iter().map(|n| ctx.lookup_or_create(n)).collect();
+                let target = ctx.lookup_or_create(var_name);
+                ir.push(FunctionCall {
+                    func: *fun_name,
+                    args: args_values,
+                    target
+                });
             }
             _ => panic!("Unexpected statement")
         }
