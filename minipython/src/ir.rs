@@ -210,21 +210,28 @@ mod tests {
     use crate::ast::Program;
     use crate::name::NameStore;
     use crate::ast::Ast::{While, Decr, Incr};
-    use crate::ir::convert_program_to_ir;
+    use crate::ir::{convert_program_to_ir, IRProgram, IRBlock};
+    use crate::value::Value;
+    use std::collections::HashMap;
+    use crate::ir::IRStatement::{ValueModify, Loop};
 
     #[test]
     fn test_io_conversion() {
         let mut name_store = NameStore::new();
         let a_var = name_store.register("a");
+        let b_var = name_store.register("b");
+        let c_var = name_store.register("c");
+        let d_var = name_store.register("d");
         let ret_var = name_store.register("ret");
         let program = Program {
             inputs: vec![
                 a_var,
-                name_store.register("b"),
-                name_store.register("c")
+                b_var,
+                c_var
             ],
             output: ret_var,
             body: vec![
+                Incr(d_var),
                 While {
                     cond_var: a_var,
                     body: vec![
@@ -236,5 +243,30 @@ mod tests {
         };
 
         let converted = convert_program_to_ir(&program, &name_store);
+        assert!(converted.is_ok());
+        let a_val = Value::new(0, a_var);
+        let b_val = Value::new(1, b_var);
+        let c_val = Value::new(2, c_var);
+        let ret_val = Value::new(3, ret_var);
+        let d_val = Value::new(4, d_var);
+        let expected = IRProgram {
+            inputs: vec![ a_val, b_val, c_val ],
+            output: ret_val,
+            functions: HashMap::new(),
+            main: IRBlock {
+                values: vec![ d_val ],
+                body: vec! [
+                    ValueModify(d_val, 1),
+                    Loop {
+                        condition_var: a_val,
+                        body: vec![
+                            ValueModify(a_val, -1),
+                            ValueModify(ret_val, 1)
+                        ]
+                    }
+                ]
+            }
+        };
+        assert_eq!(converted.unwrap(), expected);
     }
 }
