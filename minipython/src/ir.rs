@@ -162,6 +162,7 @@ fn convert_statements(ctx: &mut Context, statements: &Vec<Ast>) -> Vec<IRStateme
                 });
             }
             While { cond_var, body } => {
+                opt.flush(&mut ir);
                 let cond_val = ctx.lookup_or_create(cond_var);
                 let ir_body = convert_statements(ctx, body);
                 ir.push(Loop {
@@ -173,6 +174,7 @@ fn convert_statements(ctx: &mut Context, statements: &Vec<Ast>) -> Vec<IRStateme
         }
     }
 
+    opt.flush(&mut ir);
     ir
 }
 
