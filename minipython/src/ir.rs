@@ -204,3 +204,37 @@ pub fn convert_program_to_ir(program: &Program, name_store: &NameStore) -> Resul
 
     Ok(program)
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::ast::Program;
+    use crate::name::NameStore;
+    use crate::ast::Ast::{While, Decr, Incr};
+    use crate::ir::convert_program_to_ir;
+
+    #[test]
+    fn test_io_conversion() {
+        let mut name_store = NameStore::new();
+        let a_var = name_store.register("a");
+        let ret_var = name_store.register("ret");
+        let program = Program {
+            inputs: vec![
+                a_var,
+                name_store.register("b"),
+                name_store.register("c")
+            ],
+            output: ret_var,
+            body: vec![
+                While {
+                    cond_var: a_var,
+                    body: vec![
+                        Decr(a_var),
+                        Incr(ret_var)
+                    ]
+                }
+            ]
+        };
+
+        let converted = convert_program_to_ir(&program, &name_store);
+    }
+}
