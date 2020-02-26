@@ -3,7 +3,7 @@ use crate::name::*;
 use crate::ast::*;
 use crate::ast::Ast::*;
 use std::collections::{HashMap, HashSet};
-use crate::ir::IRStatement::{ValueModify, FunctionCall};
+use crate::ir::IRStatement::{ValueModify, FunctionCall, Loop};
 use std::rc::Rc;
 use std::ops::Deref;
 use std::borrow::BorrowMut;
@@ -142,6 +142,14 @@ fn convert_statements(ctx: &mut Context, statements: &Vec<Ast>) -> Vec<IRStateme
                     func: *fun_name,
                     args: args_values,
                     target
+                });
+            }
+            While { cond_var, body } => {
+                let cond_val = ctx.lookup_or_create(cond_var);
+                let ir_body = convert_statements(ctx, body);
+                ir.push(Loop {
+                    condition_var: cond_val,
+                    body: ir_body
                 });
             }
             _ => panic!("Unexpected statement")
