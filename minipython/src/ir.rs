@@ -271,11 +271,11 @@ mod tests {
         let converted = convert_program_to_ir(&program, &name_store);
         assert!(converted.is_ok());
         let a_val = Value::new(0, a_var);
-        let b_val = Value::new(1, b_var);
-        let c_val = Value::new(2, c_var);
-        let ret_val = Value::new(3, ret_var);
-        let a_val2 = Value::new(4, a_var);
-        let b_val2 = Value::new(4, b_var);
+        let ret_val = Value::new(1, ret_var);
+        let a_val2 = Value::new(2, a_var);
+        let b_val2 = Value::new(3, b_var);
+        let b_val = Value::new(4, b_var);
+        let c_val = Value::new(5, c_var);
 
         let mut expected_functions = HashMap::new();
         expected_functions.insert(incr_2_var, IRFunction {
@@ -296,8 +296,8 @@ mod tests {
             main: IRBlock {
                 values: vec![b_val, c_val],
                 body: vec![
-                    ValueModify(b_val, 2),
                     ValueModify(ret_val, 1),
+                    ValueModify(b_val, 2),
                     FunctionCall {
                         func: incr_2_var,
                         target: c_val,
