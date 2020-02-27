@@ -190,7 +190,7 @@ fn convert_block(ctx: &mut Context, statements: &Vec<Ast>) -> IRBlock {
 fn convert_function(ctx: &mut Context, parameters: &Vec<InternedName>, body: &Vec<Ast>) -> IRFunction {
     let mut func_ctx = ctx.create_subcontext();
     IRFunction {
-        params: parameters.iter().map(|&n| func_ctx.new_value(n)).collect(),
+        params: parameters.iter().map(|&n| func_ctx.new_io_value(n)).collect(),
         body: convert_block(&mut func_ctx, body),
     }
 }
