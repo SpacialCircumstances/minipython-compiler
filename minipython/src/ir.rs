@@ -2,7 +2,7 @@ use crate::value::Value;
 use crate::name::*;
 use crate::ast::*;
 use crate::ast::Ast::*;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, BTreeMap};
 use crate::ir::IRStatement::{ValueModify, FunctionCall, Loop};
 use std::rc::Rc;
 use std::ops::Deref;
@@ -51,21 +51,21 @@ enum ValueKind {
 
 struct Context {
     next_id: Rc<u64>,
-    context: HashMap<InternedName, (ValueKind, Value)>,
+    context: BTreeMap<InternedName, (ValueKind, Value)>,
 }
 
 impl Context {
     fn root() -> Self {
         Context {
             next_id: Rc::new(0),
-            context: HashMap::new(),
+            context: BTreeMap::new(),
         }
     }
 
     fn create_subcontext(&mut self) -> Self {
         Context {
             next_id: self.next_id.clone(),
-            context: HashMap::new(),
+            context: BTreeMap::new(),
         }
     }
 
@@ -103,13 +103,13 @@ impl Context {
 }
 
 struct OptimizationContext {
-    values: HashMap<Value, i64>
+    values: BTreeMap<Value, i64>
 }
 
 impl OptimizationContext {
     fn new() -> Self {
         OptimizationContext {
-            values: HashMap::new()
+            values: BTreeMap::new()
         }
     }
 

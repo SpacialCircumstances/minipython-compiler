@@ -1,6 +1,6 @@
 use crate::name::{InternedName, NameStore};
 
-#[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Ord, PartialOrd)]
 pub struct Value {
     id: u64,
     name: InternedName
