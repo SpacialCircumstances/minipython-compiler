@@ -2,11 +2,12 @@ use crate::value::Value;
 use crate::name::*;
 use crate::ast::*;
 use crate::ast::Ast::*;
-use std::collections::{HashMap, HashSet, BTreeMap};
+use std::collections::{HashMap, BTreeMap};
 use crate::ir::IRStatement::{ValueModify, FunctionCall, Loop};
 use std::rc::Rc;
 use std::ops::Deref;
 use std::borrow::BorrowMut;
+use std::cell::RefCell;
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct IRFunction {
@@ -50,14 +51,14 @@ enum ValueKind {
 }
 
 struct Context {
-    next_id: Rc<u64>,
+    next_id: Rc<RefCell<u64>>,
     context: BTreeMap<InternedName, (ValueKind, Value)>,
 }
 
 impl Context {
     fn root() -> Self {
         Context {
-            next_id: Rc::new(0),
+            next_id: Rc::new(RefCell::new(0)),
             context: BTreeMap::new(),
         }
     }
@@ -70,17 +71,17 @@ impl Context {
     }
 
     fn new_value(&mut self, name: InternedName) -> Value {
-        let counter = Rc::get_mut(&mut self.next_id).unwrap();
-        let val = Value::new(*counter, name);
-        *counter += 1;
+        let old = *self.next_id.borrow().deref();
+        let val = Value::new(old, name);
+        self.next_id.borrow_mut().replace(old + 1);
         self.context.insert(name, (ValueKind::Normal, val));
         val
     }
 
     fn new_io_value(&mut self, name: InternedName) -> Value {
-        let counter = Rc::get_mut(&mut self.next_id).unwrap();
-        let val = Value::new(*counter, name);
-        *counter += 1;
+        let old = *self.next_id.borrow().deref();
+        let val = Value::new(old, name);
+        self.next_id.borrow_mut().replace(old + 1);
         self.context.insert(name, (ValueKind::IO, val));
         val
     }
@@ -280,13 +281,13 @@ mod tests {
         expected_functions.insert(incr_2_var, IRFunction {
             params: vec![a_val2],
             body: IRBlock {
-                values: vec![ b_val2 ],
+                values: vec![b_val2],
                 body: vec![
                     ValueModify(a_val2, 2),
                     ValueModify(b_val2, 1),
                     IRStatement::Return(a_val2)
-                ]
-            }
+                ],
+            },
         });
 
         let expected = IRProgram {
@@ -304,7 +305,7 @@ mod tests {
                     }
                 ],
             },
-            functions: expected_functions
+            functions: expected_functions,
         };
 
         assert_eq!(converted.unwrap(), expected);
