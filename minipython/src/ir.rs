@@ -46,26 +46,26 @@ pub struct IRProgram {
 #[derive(Eq, PartialEq, Clone, Copy, Debug)]
 enum ValueKind {
     IO,
-    Normal
+    Normal,
 }
 
 struct Context {
     next_id: Rc<u64>,
-    context: HashMap<InternedName, (ValueKind, Value)>
+    context: HashMap<InternedName, (ValueKind, Value)>,
 }
 
 impl Context {
     fn root() -> Self {
         Context {
             next_id: Rc::new(0),
-            context: HashMap::new()
+            context: HashMap::new(),
         }
     }
 
     fn create_subcontext(&mut self) -> Self {
         Context {
             next_id: self.next_id.clone(),
-            context: HashMap::new()
+            context: HashMap::new(),
         }
     }
 
@@ -158,7 +158,7 @@ fn convert_statements(ctx: &mut Context, statements: &Vec<Ast>) -> Vec<IRStateme
                 ir.push(FunctionCall {
                     func: *fun_name,
                     args: args_values,
-                    target
+                    target,
                 });
             }
             While { cond_var, body } => {
@@ -167,7 +167,7 @@ fn convert_statements(ctx: &mut Context, statements: &Vec<Ast>) -> Vec<IRStateme
                 let ir_body = convert_statements(ctx, body);
                 ir.push(Loop {
                     condition_var: cond_val,
-                    body: ir_body
+                    body: ir_body,
                 });
             }
             _ => panic!("Unexpected statement")
@@ -182,7 +182,7 @@ fn convert_block(ctx: &mut Context, statements: &Vec<Ast>) -> IRBlock {
     let ir_statements = convert_statements(ctx, statements);
     IRBlock {
         values: ctx.get_context_values(),
-        body: ir_statements
+        body: ir_statements,
     }
 }
 
@@ -190,7 +190,7 @@ fn convert_function(ctx: &mut Context, parameters: &Vec<InternedName>, body: &Ve
     let mut func_ctx = ctx.create_subcontext();
     IRFunction {
         params: parameters.iter().map(|&n| func_ctx.new_value(n)).collect(),
-        body: convert_block(&mut func_ctx, body)
+        body: convert_block(&mut func_ctx, body),
     }
 }
 
@@ -228,11 +228,86 @@ pub fn convert_program_to_ir(program: &Program, name_store: &NameStore) -> Resul
 mod tests {
     use crate::ast::Program;
     use crate::name::NameStore;
-    use crate::ast::Ast::{While, Decr, Incr};
-    use crate::ir::{convert_program_to_ir, IRProgram, IRBlock};
+    use crate::ast::Ast::{While, Decr, Incr, Def, Return, Assign};
+    use crate::ir::{convert_program_to_ir, IRProgram, IRBlock, IRFunction, IRStatement};
     use crate::value::Value;
     use std::collections::HashMap;
-    use crate::ir::IRStatement::{ValueModify, Loop};
+    use crate::ir::IRStatement::{ValueModify, Loop, FunctionCall};
+
+    fn test_program_conversion() {
+        let mut name_store = NameStore::new();
+        let a_var = name_store.register("a");
+        let b_var = name_store.register("b");
+        let c_var = name_store.register("c");
+        let incr_2_var = name_store.register("incr_2");
+        let ret_var = name_store.register("ret");
+        let program = Program {
+            inputs: vec![a_var],
+            output: ret_var,
+            body: vec![
+                Def {
+                    name: incr_2_var,
+                    parameters: vec![a_var],
+                    body: vec![
+                        Incr(a_var),
+                        Incr(a_var),
+                        Incr(b_var),
+                        Return(a_var)
+                    ],
+                },
+                Incr(b_var),
+                Incr(b_var),
+                Incr(ret_var),
+                Assign {
+                    var_name: c_var,
+                    fun_name: incr_2_var,
+                    args: vec![b_var],
+                }
+            ],
+        };
+
+        let converted = convert_program_to_ir(&program, &name_store);
+        assert!(converted.is_ok());
+        let a_val = Value::new(0, a_var);
+        let b_val = Value::new(1, b_var);
+        let c_val = Value::new(2, c_var);
+        let ret_val = Value::new(3, ret_var);
+        let a_val2 = Value::new(4, a_var);
+        let b_val2 = Value::new(4, b_var);
+
+        let mut expected_functions = HashMap::new();
+        expected_functions.insert(incr_2_var, IRFunction {
+            params: vec![a_val2],
+            body: IRBlock {
+                values: vec![ b_val2 ],
+                body: vec![
+                    ValueModify(a_val2, 2),
+                    ValueModify(b_val2, 1),
+                    IRStatement::Return(a_val2)
+                ]
+            }
+        });
+
+        let expected = IRProgram {
+            inputs: vec![a_val],
+            output: ret_val,
+            main: IRBlock {
+                values: vec![b_val, c_val],
+                body: vec![
+                    ValueModify(b_val, 2),
+                    ValueModify(ret_val, 1),
+                    FunctionCall {
+                        func: incr_2_var,
+                        target: c_val,
+                        args: vec![b_val],
+                    }
+                ],
+            },
+            functions: expected_functions
+        };
+
+        assert_eq!(converted.unwrap(), expected);
+    }
 
     #[test]
     fn test_io_conversion() {
@@ -256,9 +331,9 @@ mod tests {
                     body: vec![
                         Decr(a_var),
                         Incr(ret_var)
-                    ]
+                    ],
                 }
-            ]
+            ],
         };
 
         let converted = convert_program_to_ir(&program, &name_store);
@@ -269,22 +344,22 @@ mod tests {
         let ret_val = Value::new(3, ret_var);
         let d_val = Value::new(4, d_var);
         let expected = IRProgram {
-            inputs: vec![ a_val, b_val, c_val ],
+            inputs: vec![a_val, b_val, c_val],
             output: ret_val,
             functions: HashMap::new(),
             main: IRBlock {
-                values: vec![ d_val ],
-                body: vec! [
+                values: vec![d_val],
+                body: vec![
                     ValueModify(d_val, 1),
                     Loop {
                         condition_var: a_val,
                         body: vec![
                             ValueModify(a_val, -1),
                             ValueModify(ret_val, 1)
-                        ]
+                        ],
                     }
-                ]
-            }
+                ],
+            },
         };
         assert_eq!(converted.unwrap(), expected);
     }
