@@ -234,6 +234,7 @@ mod tests {
     use std::collections::HashMap;
     use crate::ir::IRStatement::{ValueModify, Loop, FunctionCall};
 
+    #[test]
     fn test_program_conversion() {
         let mut name_store = NameStore::new();
         let a_var = name_store.register("a");
