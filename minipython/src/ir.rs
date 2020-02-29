@@ -244,10 +244,59 @@ mod tests {
     use crate::ast::Program;
     use crate::name::NameStore;
     use crate::ast::Ast::{While, Decr, Incr, Def, Return, Assign};
-    use crate::ir::{convert_program_to_ir, IRProgram, IRBlock, IRFunction, IRStatement};
+    use crate::ir::{convert_program_to_ir, IRProgram, IRBlock, IRFunction, IRStatement, Context, convert_program};
     use crate::value::Value;
     use std::collections::HashMap;
     use crate::ir::IRStatement::{ValueModify, Loop, FunctionCall};
+    use crate::parser::parse_program;
+
+    #[test]
+    fn test_function_call_collection() {
+        let code =
+            "input:
+output: f
+def add(a, b):
+    while a!=0:
+        a-=1
+        b+=1
+    return b
+
+def mul(a, b):
+    while a!=0:
+        a-=1
+        c=add(b, c)
+    return c
+
+d+=1
+e+=1
+f=mul(d, e)";
+
+        let (store, ast_res) = parse_program(code);
+        let ast = ast_res.unwrap();
+        let mut ctx = Context::root();
+        let ir_prog = convert_program(&mut ctx, &ast);
+        let func_calls = ctx.function_calls;
+        let c_v = store.by_index(5).unwrap();
+        let expected = vec![
+            Assign {
+                var_name: c_v,
+                fun_name: store.by_index(1).unwrap(),
+                args: vec![
+                    store.by_index(3).unwrap(),
+                    c_v
+                ]
+            },
+            Assign {
+                var_name: store.by_index(0).unwrap(),
+                fun_name: store.by_index(4).unwrap(),
+                args: vec![
+                    store.by_index(6).unwrap(),
+                    store.by_index(7).unwrap()
+                ]
+            }
+        ];
+        assert_eq!(func_calls, expected);
+    }
 
     #[test]
     fn test_program_conversion() {
