@@ -235,6 +235,26 @@ pub fn convert_program_to_ir(program: &Program, name_store: &NameStore) -> Resul
 
     let func_calls = ctx.function_calls;
 
+    for x in func_calls {
+        match x {
+            Assign { var_name, fun_name, args } => {
+                let func = ir_prog.functions.get(&fun_name);
+                let f = name_store.get(fun_name).unwrap();
+                let v = name_store.get(var_name).unwrap();
+                match func {
+                    Some(func) => {
+                        if func.params.len() != args.len() {
+                            return Err(format!("Error assigning to variable {}: Function {} requires {} arguments, but got {}", v, f, func.params.len(), args.len()))
+                        }
+                    },
+                    None => {
+                        return Err(format!("Error assigning to variable {}: Function {} does not exist", v, f))
+                    }
+                }
+            },
+            _ => unreachable!()
+        }
+    }
 
     Ok(ir_prog)
 }
@@ -296,6 +316,7 @@ f=mul(d, e)";
             }
         ];
         assert_eq!(func_calls, expected);
+        assert!(convert_program_to_ir(&ast, &store).is_ok());
     }
 
     #[test]
