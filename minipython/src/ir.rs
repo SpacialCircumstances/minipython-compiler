@@ -50,13 +50,13 @@ enum ValueKind {
     Normal,
 }
 
-struct Context<'a> {
+struct Context {
     next_id: Rc<RefCell<u64>>,
     context: BTreeMap<InternedName, (ValueKind, Value)>,
-    function_calls: Vec<&'a Ast>,
+    function_calls: Vec<Ast>,
 }
 
-impl<'a> Context<'a> {
+impl Context {
     fn root() -> Self {
         Context {
             next_id: Rc::new(RefCell::new(0)),
@@ -135,7 +135,7 @@ impl OptimizationContext {
     }
 }
 
-fn convert_statements<'a>(ctx: &mut Context<'a>, statements: &'a Vec<Ast>) -> Vec<IRStatement> {
+fn convert_statements(ctx: &mut Context, statements: &Vec<Ast>) -> Vec<IRStatement> {
     let mut ir = Vec::new();
     let mut opt = OptimizationContext::new();
 
@@ -156,7 +156,7 @@ fn convert_statements<'a>(ctx: &mut Context<'a>, statements: &'a Vec<Ast>) -> Ve
             }
             Assign { var_name, fun_name, args } => {
                 //Record function call for checking it later
-                ctx.function_calls.push(statement);
+                ctx.function_calls.push(statement.clone());
                 //We only *need* to flush variables used in the statement
                 opt.flush(&mut ir);
                 let args_values = args.iter().map(|n| ctx.lookup_or_create(n)).collect();
@@ -184,7 +184,7 @@ fn convert_statements<'a>(ctx: &mut Context<'a>, statements: &'a Vec<Ast>) -> Ve
     ir
 }
 
-fn convert_block<'a>(ctx: &mut Context<'a>, statements: &'a Vec<Ast>) -> IRBlock {
+fn convert_block(ctx: &mut Context, statements: &Vec<Ast>) -> IRBlock {
     let ir_statements = convert_statements(ctx, statements);
     IRBlock {
         values: ctx.get_context_values(),
@@ -192,7 +192,7 @@ fn convert_block<'a>(ctx: &mut Context<'a>, statements: &'a Vec<Ast>) -> IRBlock
     }
 }
 
-fn convert_function<'a>(ctx: &mut Context<'a>, parameters: &Vec<InternedName>, body: &'a Vec<Ast>) -> IRFunction {
+fn convert_function(ctx: &mut Context, parameters: &Vec<InternedName>, body: &Vec<Ast>) -> IRFunction {
     let mut func_ctx = ctx.create_subcontext();
     let func = IRFunction {
         params: parameters.iter().map(|&n| func_ctx.new_io_value(n)).collect(),
@@ -202,8 +202,7 @@ fn convert_function<'a>(ctx: &mut Context<'a>, parameters: &Vec<InternedName>, b
     func
 }
 
-pub fn convert_program_to_ir(program: &Program, name_store: &NameStore) -> Result<IRProgram, String> {
-    let mut ctx = Context::root();
+fn convert_program(ctx: &mut Context, program: &Program) -> IRProgram {
     let inputs: Vec<Value> = program.inputs.iter().map(|n| ctx.new_io_value(*n)).collect();
     let output = ctx.new_io_value(program.output);
     let mut functions = HashMap::new();
@@ -212,7 +211,7 @@ pub fn convert_program_to_ir(program: &Program, name_store: &NameStore) -> Resul
     for expr in &program.body {
         match expr {
             Def { name, parameters, body } => {
-                functions.insert(*name, convert_function(&mut ctx, parameters, body));
+                functions.insert(*name, convert_function(ctx, parameters, body));
             }
             _ => {
                 statements.push(expr.clone())
@@ -220,18 +219,24 @@ pub fn convert_program_to_ir(program: &Program, name_store: &NameStore) -> Resul
         }
     }
 
-    let block = convert_block(&mut ctx, &statements);
+    let block = convert_block(ctx, &statements);
 
-    let func_calls = ctx.function_calls;
-
-    let program = IRProgram {
+    IRProgram {
         inputs,
         output,
         functions,
         main: block,
-    };
+    }
+}
 
-    Ok(program)
+pub fn convert_program_to_ir(program: &Program, name_store: &NameStore) -> Result<IRProgram, String> {
+    let mut ctx = Context::root();
+    let ir_prog = convert_program(&mut ctx, program);
+
+    let func_calls = ctx.function_calls;
+
+
+    Ok(ir_prog)
 }
 
 #[cfg(test)]
