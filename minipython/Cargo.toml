@@ -10,3 +10,4 @@ lalrpop = "0.17.2"
 
 [dependencies]
 lalrpop-util = "0.17.2"
+inkwell = { git = "https://github.com/TheDan64/inkwell", branch = "llvm8-0" }
