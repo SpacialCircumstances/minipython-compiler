@@ -2,6 +2,7 @@ use std::path::Path;
 use std::fs;
 use crate::parser;
 use crate::ir;
+use crate::codegen;
 
 pub struct CompilerInstance<'a> {
     input_file: &'a Path,
@@ -25,6 +26,6 @@ impl<'a> CompilerInstance<'a> {
         let (name_store, ast_res) = parser::parse_program(&code);
         let ast = ast_res?;
         let ir = ir::convert_program_to_ir(&ast, &name_store)?;
-        Ok(())
+        codegen::generate_llvm_code(&ir, &name_store).map_err(|e| format!("{}", e))
     }
 }
