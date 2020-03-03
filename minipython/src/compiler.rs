@@ -3,6 +3,8 @@ use std::fs;
 use crate::parser;
 use crate::ir;
 use crate::codegen;
+use std::fs::File;
+use std::io::{BufWriter, Write};
 
 pub struct CompilerInstance<'a> {
     input_file: &'a Path,
@@ -26,6 +28,10 @@ impl<'a> CompilerInstance<'a> {
         let (name_store, ast_res) = parser::parse_program(&code);
         let ast = ast_res?;
         let ir = ir::convert_program_to_ir(&ast, &name_store)?;
-        codegen::generate_llvm_code(&ir, &name_store).map_err(|e| format!("{}", e))
+        let file = File::create(self.output_file).map_err(|e| format!("{}", e))?;
+        let mut writer = BufWriter::new(&file);
+        let res = codegen::compile_to_c(&ir, &name_store, &mut writer).map_err(|e| format!("{}", e));
+        writer.flush().map_err(|e| format!("{}", e))?;
+        res
     }
 }
