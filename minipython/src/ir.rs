@@ -11,14 +11,14 @@ use std::cell::RefCell;
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct IRFunction {
-    params: Vec<Value>,
-    body: IRBlock,
+    pub params: Vec<Value>,
+    pub body: IRBlock,
 }
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct IRBlock {
-    values: Vec<Value>,
-    body: Vec<IRStatement>,
+    pub values: Vec<Value>,
+    pub body: Vec<IRStatement>,
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -38,10 +38,10 @@ pub enum IRStatement {
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct IRProgram {
-    inputs: Vec<Value>,
-    output: Value,
-    functions: HashMap<InternedName, IRFunction>,
-    main: IRBlock,
+    pub inputs: Vec<Value>,
+    pub output: Value,
+    pub functions: HashMap<InternedName, IRFunction>,
+    pub main: IRBlock,
 }
 
 #[derive(Eq, PartialEq, Clone, Copy, Debug)]
