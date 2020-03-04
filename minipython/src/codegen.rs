@@ -13,24 +13,24 @@ fn to_value_name(v: Value, name_store: &NameStore) -> String {
 
 pub fn compile_to_c(program: &IRProgram, name_store: &NameStore, output: &mut BufWriter<&File>) -> Result<(), Box<dyn Error>> {
     //Include stdio
-    writeln!(output, "#include <stdio.h>");
+    writeln!(output, "#include <stdio.h>")?;
 
     //TODO: Functions
 
-    writeln!(output, "int main(int argc, char* argv[]) {{");
+    writeln!(output, "int main(int argc, char* argv[]) {{")?;
 
     for &input_val in &program.inputs {
         let val_name = to_value_name(input_val, name_store);
-        writeln!(output, "{} {};", C_VALUE_TYPE, val_name);
-        writeln!(output, "scanf(\"%llu\", &{});", val_name);
+        writeln!(output, "{} {};", C_VALUE_TYPE, val_name)?;
+        writeln!(output, "scanf(\"%llu\", &{});", val_name)?;
     }
 
-    writeln!(output, "{} {};", C_VALUE_TYPE, to_value_name(program.output, name_store));
+    writeln!(output, "{} {};", C_VALUE_TYPE, to_value_name(program.output, name_store))?;
 
     //TODO: Main block
 
-    writeln!(output, "return 0;");
-    writeln!(output, "}}");
+    writeln!(output, "return 0;")?;
+    writeln!(output, "}}")?;
 
     Ok(())
 }
