@@ -15,7 +15,14 @@ pub fn compile_to_c(program: &IRProgram, name_store: &NameStore, output: &mut Bu
     //Include stdio
     writeln!(output, "#include <stdio.h>")?;
 
-    //TODO: Functions
+    for (&function_name, function) in &program.functions {
+        let params = function.params.iter().map(|v| v.get_name(name_store).unwrap().as_str()).collect::<Vec<&str>>().join(", ");
+        writeln!(output, "int {}({}) {{", name_store.get(function_name).unwrap(), params)?;
+
+        //TODO: Block
+
+        writeln!(output, "}}")?;
+    }
 
     writeln!(output, "int main(int argc, char* argv[]) {{")?;
 
