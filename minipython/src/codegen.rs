@@ -25,8 +25,8 @@ pub fn compile_to_c(program: &IRProgram, name_store: &NameStore, output: &mut Bu
     writeln!(output, "#include <stdio.h>")?;
 
     for (&function_name, function) in &program.functions {
-        let params = function.params.iter().map(|&v| to_value_name(v, name_store)).collect::<Vec<String>>().join(", ");
-        writeln!(output, "int {}({}) {{", name_store.get(function_name).unwrap(), params)?;
+        let params = function.params.iter().map(|&v| format!("{} {}", C_VALUE_TYPE, to_value_name(v, name_store))).collect::<Vec<String>>().join(", ");
+        writeln!(output, "{} {}({}) {{", C_VALUE_TYPE, name_store.get(function_name).unwrap(), params)?;
 
         compile_block(&function.body, name_store, output)?;
 
