@@ -184,25 +184,25 @@ fn convert_statements(ctx: &mut Context, statements: &Vec<Ast>) -> Vec<IRStateme
     ir
 }
 
-fn convert_block(ctx: &mut Context, statements: &Vec<Ast>) -> IRBlock {
+fn convert_block(ctx: &mut Context, statements: &Vec<Ast>) -> Result<IRBlock, String> {
     let ir_statements = convert_statements(ctx, statements);
-    IRBlock {
+    Ok(IRBlock {
         values: ctx.get_context_values(),
         body: ir_statements,
-    }
+    })
 }
 
-fn convert_function(ctx: &mut Context, parameters: &Vec<InternedName>, body: &Vec<Ast>) -> IRFunction {
+fn convert_function(ctx: &mut Context, parameters: &Vec<InternedName>, body: &Vec<Ast>) -> Result<IRFunction, String> {
     let mut func_ctx = ctx.create_subcontext();
     let func = IRFunction {
         params: parameters.iter().map(|&n| func_ctx.new_io_value(n)).collect(),
-        body: convert_block(&mut func_ctx, body),
+        body: convert_block(&mut func_ctx, body)?,
     };
     ctx.function_calls.append(&mut func_ctx.function_calls);
-    func
+    Ok(func)
 }
 
-fn convert_program(ctx: &mut Context, program: &Program) -> IRProgram {
+fn convert_program(ctx: &mut Context, program: &Program) -> Result<IRProgram, String> {
     let inputs: Vec<Value> = program.inputs.iter().map(|n| ctx.new_io_value(*n)).collect();
     let output = ctx.new_io_value(program.output);
     let mut functions = HashMap::new();
@@ -211,7 +211,7 @@ fn convert_program(ctx: &mut Context, program: &Program) -> IRProgram {
     for expr in &program.body {
         match expr {
             Def { name, parameters, body } => {
-                functions.insert(*name, convert_function(ctx, parameters, body));
+                functions.insert(*name, convert_function(ctx, parameters, body)?);
             }
             _ => {
                 statements.push(expr.clone())
@@ -219,19 +219,19 @@ fn convert_program(ctx: &mut Context, program: &Program) -> IRProgram {
         }
     }
 
-    let block = convert_block(ctx, &statements);
+    let block = convert_block(ctx, &statements)?;
 
-    IRProgram {
+    Ok(IRProgram {
         inputs,
         output,
         functions,
         main: block,
-    }
+    })
 }
 
 pub fn convert_program_to_ir(program: &Program, name_store: &NameStore) -> Result<IRProgram, String> {
     let mut ctx = Context::root();
-    let ir_prog = convert_program(&mut ctx, program);
+    let ir_prog = convert_program(&mut ctx, program)?;
 
     let func_calls = ctx.function_calls;
 
