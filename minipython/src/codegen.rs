@@ -4,6 +4,7 @@ use std::error::Error;
 use std::io::{BufWriter, Write};
 use std::fs::File;
 use crate::value::Value;
+use crate::ir::IRStatement::{ValueModify, Return};
 
 const C_VALUE_TYPE: &str = "unsigned long long int";
 const C_VALUE_FORMAT: &str = "%llu";
@@ -21,6 +22,20 @@ pub fn compile_block(block: &IRBlock, name_store: &NameStore, output: &mut BufWr
     for &val in &block.values {
         let val_name = to_value_name(val, name_store);
         write_value_init(output, &val_name)?;
+    }
+
+    for statement in &block.body {
+        match statement {
+            ValueModify(val, change) => {
+                let val_name = to_value_name(*val, name_store);
+                writeln!(output, "{} += {};", val_name, change)?;
+            },
+            Return(val) => {
+                let val_name = to_value_name(*val, name_store);
+                writeln!(output, "return {}", val_name)?;
+            }
+            _ => unimplemented!()
+        }
     }
 
     Ok(())
