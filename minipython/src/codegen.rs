@@ -12,8 +12,8 @@ fn to_value_name(v: Value, name_store: &NameStore) -> String {
 }
 
 pub fn compile_block(block: &IRBlock, name_store: &NameStore, output: &mut BufWriter<&File>) -> Result<(), Box<dyn Error>> {
-    for val in &block.values {
-        let val_name = val.get_name(name_store).unwrap();
+    for &val in &block.values {
+        let val_name = to_value_name(val, name_store);
         writeln!(output, "{} {};", C_VALUE_TYPE, val_name)?;
     }
 
@@ -25,7 +25,7 @@ pub fn compile_to_c(program: &IRProgram, name_store: &NameStore, output: &mut Bu
     writeln!(output, "#include <stdio.h>")?;
 
     for (&function_name, function) in &program.functions {
-        let params = function.params.iter().map(|v| v.get_name(name_store).unwrap().as_str()).collect::<Vec<&str>>().join(", ");
+        let params = function.params.iter().map(|&v| to_value_name(v, name_store)).collect::<Vec<String>>().join(", ");
         writeln!(output, "int {}({}) {{", name_store.get(function_name).unwrap(), params)?;
 
         compile_block(&function.body, name_store, output)?;
@@ -42,7 +42,8 @@ pub fn compile_to_c(program: &IRProgram, name_store: &NameStore, output: &mut Bu
         writeln!(output, "scanf(\"%llu\", &{});", val_name)?;
     }
 
-    writeln!(output, "{} {};", C_VALUE_TYPE, to_value_name(program.output, name_store))?;
+    let output_name = to_value_name(program.output, name_store);
+    writeln!(output, "{} {};", C_VALUE_TYPE, output_name)?;
 
     compile_block(&program.main, name_store, output)?;
 
