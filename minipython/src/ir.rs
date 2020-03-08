@@ -184,19 +184,27 @@ fn convert_statements(ctx: &mut Context, statements: &Vec<Ast>) -> Vec<IRStateme
     ir
 }
 
-fn convert_block(ctx: &mut Context, statements: &Vec<Ast>) -> Result<IRBlock, String> {
+fn convert_block(ctx: &mut Context, statements: &Vec<Ast>, check_return: bool) -> Result<IRBlock, String> {
     let ir_statements = convert_statements(ctx, statements);
-    Ok(IRBlock {
-        values: ctx.get_context_values(),
-        body: ir_statements,
-    })
+    let has_return = !check_return || ir_statements.iter().any(|st| match st {
+        IRStatement::Return(_) => true,
+        _ => false
+    });
+    if has_return {
+        Ok(IRBlock {
+            values: ctx.get_context_values(),
+            body: ir_statements,
+        })
+    } else {
+        Err(String::from("Block has no return value"))
+    }
 }
 
 fn convert_function(ctx: &mut Context, parameters: &Vec<InternedName>, body: &Vec<Ast>) -> Result<IRFunction, String> {
     let mut func_ctx = ctx.create_subcontext();
     let func = IRFunction {
         params: parameters.iter().map(|&n| func_ctx.new_io_value(n)).collect(),
-        body: convert_block(&mut func_ctx, body)?,
+        body: convert_block(&mut func_ctx, body, true)?,
     };
     ctx.function_calls.append(&mut func_ctx.function_calls);
     Ok(func)
@@ -219,7 +227,7 @@ fn convert_program(ctx: &mut Context, program: &Program) -> Result<IRProgram, St
         }
     }
 
-    let block = convert_block(ctx, &statements)?;
+    let block = convert_block(ctx, &statements, false)?;
 
     Ok(IRProgram {
         inputs,
