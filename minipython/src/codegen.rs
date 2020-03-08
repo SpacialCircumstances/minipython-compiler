@@ -11,6 +11,15 @@ fn to_value_name(v: Value, name_store: &NameStore) -> String {
     format!("{}_{}", v.get_name(name_store).unwrap(), v.get_id())
 }
 
+pub fn compile_block(block: &IRBlock, name_store: &NameStore, output: &mut BufWriter<&File>) -> Result<(), Box<dyn Error>> {
+    for val in &block.values {
+        let val_name = val.get_name(name_store).unwrap();
+        writeln!(output, "{} {};", C_VALUE_TYPE, val_name)?;
+    }
+
+    Ok(())
+}
+
 pub fn compile_to_c(program: &IRProgram, name_store: &NameStore, output: &mut BufWriter<&File>) -> Result<(), Box<dyn Error>> {
     //Include stdio
     writeln!(output, "#include <stdio.h>")?;
@@ -19,7 +28,7 @@ pub fn compile_to_c(program: &IRProgram, name_store: &NameStore, output: &mut Bu
         let params = function.params.iter().map(|v| v.get_name(name_store).unwrap().as_str()).collect::<Vec<&str>>().join(", ");
         writeln!(output, "int {}({}) {{", name_store.get(function_name).unwrap(), params)?;
 
-        //TODO: Block
+        compile_block(&function.body, name_store, output)?;
 
         writeln!(output, "}}")?;
     }
@@ -35,7 +44,7 @@ pub fn compile_to_c(program: &IRProgram, name_store: &NameStore, output: &mut Bu
 
     writeln!(output, "{} {};", C_VALUE_TYPE, to_value_name(program.output, name_store))?;
 
-    //TODO: Main block
+    compile_block(&program.main, name_store, output)?;
 
     writeln!(output, "return 0;")?;
     writeln!(output, "}}")?;
