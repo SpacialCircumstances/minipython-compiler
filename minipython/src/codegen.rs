@@ -22,6 +22,7 @@ pub fn compile_to_c(program: &IRProgram, name_store: &NameStore, output: &mut Bu
     for &input_val in &program.inputs {
         let val_name = to_value_name(input_val, name_store);
         writeln!(output, "{} {};", C_VALUE_TYPE, val_name)?;
+        writeln!(output, "printf(\"{}=\");", input_val.get_name(name_store).unwrap())?;
         writeln!(output, "scanf(\"%llu\", &{});", val_name)?;
     }
 
