@@ -11,10 +11,15 @@ fn to_value_name(v: Value, name_store: &NameStore) -> String {
     format!("{}_{}", v.get_name(name_store).unwrap(), v.get_id())
 }
 
+fn write_value_init(output: &mut BufWriter<&File>, output_name: &String) -> Result<(), Box<dyn Error>> {
+    writeln!(output, "{} {} = 0;", C_VALUE_TYPE, output_name)?;
+    Ok(())
+}
+
 pub fn compile_block(block: &IRBlock, name_store: &NameStore, output: &mut BufWriter<&File>) -> Result<(), Box<dyn Error>> {
     for &val in &block.values {
         let val_name = to_value_name(val, name_store);
-        writeln!(output, "{} {};", C_VALUE_TYPE, val_name)?;
+        write_value_init(output, &val_name)?;
     }
 
     Ok(())
@@ -43,7 +48,7 @@ pub fn compile_to_c(program: &IRProgram, name_store: &NameStore, output: &mut Bu
     }
 
     let output_name = to_value_name(program.output, name_store);
-    writeln!(output, "{} {};", C_VALUE_TYPE, output_name)?;
+    write_value_init(output, &output_name)?;
 
     compile_block(&program.main, name_store, output)?;
 
