@@ -1,0 +1,33 @@
+input: x1, x2
+output: a
+
+def add(x, y):
+    while x!=0:
+        n+=1
+        x-=1
+    #endwhile
+    while y!=0:
+        n+=1
+        y-=1
+    #endwhile
+    return n
+#enddef
+
+def mul(a, b):
+    while b!=0:
+        n=add(n, a)
+        b-=1
+    #endwhile
+    return n
+#enddef
+
+def exp(a, b):
+    n+=1
+    while b!=0:
+        n=mul(n, a)
+        b-=1
+    #endwhile
+    return n
+#enddef
+
+a=exp(x1, x2)
