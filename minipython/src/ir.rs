@@ -127,9 +127,25 @@ impl OptimizationContext {
         *old -= 1;
     }
 
-    fn flush(&mut self, target: &mut Vec<IRStatement>) {
+    fn flush(&mut self, target: &mut Vec<IRStatement>, variables: &[Value]) {
+        for val in variables {
+            match self.values.get(val) {
+                None => (),
+                Some(&m) => {
+                    self.values.remove(val);
+                    if m != 0 {
+                        target.push(ValueModify(*val, m));
+                    }
+                }
+            }
+        }
+    }
+
+    fn flush_all(&mut self, target: &mut Vec<IRStatement>) {
         for (&val, &modification) in &self.values {
-            target.push(ValueModify(val, modification));
+            if modification != 0 {
+                target.push(ValueModify(val, modification));
+            }
         }
         self.values.clear();
     }
@@ -150,16 +166,16 @@ fn convert_statements(ctx: &mut Context, statements: &Vec<Ast>) -> Vec<IRStateme
                 opt.decr(v);
             }
             Return(name) => {
-                opt.flush(&mut ir);
+                opt.flush_all(&mut ir);
                 let v = ctx.lookup_or_create(name);
                 ir.push(IRStatement::Return(v));
             }
             Assign { var_name, fun_name, args } => {
                 //Record function call for checking it later
                 ctx.function_calls.push(statement.clone());
+                let args_values: Vec<Value> = args.iter().map(|n| ctx.lookup_or_create(n)).collect();
                 //We only *need* to flush variables used in the statement
-                opt.flush(&mut ir);
-                let args_values = args.iter().map(|n| ctx.lookup_or_create(n)).collect();
+                opt.flush(&mut ir, &args_values);
                 let target = ctx.lookup_or_create(var_name);
                 ir.push(FunctionCall {
                     func: *fun_name,
@@ -168,8 +184,8 @@ fn convert_statements(ctx: &mut Context, statements: &Vec<Ast>) -> Vec<IRStateme
                 });
             }
             While { cond_var, body } => {
-                opt.flush(&mut ir);
                 let cond_val = ctx.lookup_or_create(cond_var);
+                opt.flush_all(&mut ir);
                 let ir_body = convert_statements(ctx, body);
                 ir.push(Loop {
                     condition_var: cond_val,
@@ -180,7 +196,7 @@ fn convert_statements(ctx: &mut Context, statements: &Vec<Ast>) -> Vec<IRStateme
         }
     }
 
-    opt.flush(&mut ir);
+    opt.flush_all(&mut ir);
     ir
 }
 
@@ -388,13 +404,13 @@ f=mul(d, e)";
             main: IRBlock {
                 values: vec![b_val, c_val],
                 body: vec![
-                    ValueModify(ret_val, 1),
                     ValueModify(b_val, 2),
                     FunctionCall {
                         func: incr_2_var,
                         target: c_val,
                         args: vec![b_val],
-                    }
+                    },
+                    ValueModify(ret_val, 1)
                 ],
             },
             functions: expected_functions,
