@@ -12,6 +12,8 @@ pub fn parse_program(code: &str) -> (NameStore, Result<Program, String>) {
     (name_store, res)
 }
 
+//We use this for some tests
+#[allow(dead_code)]
 fn parse_block(code: &str) -> (NameStore, Result<Vec<Ast>, String>) {
     let mut name_store = NameStore::new();
     let parser = minipython::TopLevelBlockParser::new();

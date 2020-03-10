@@ -30,8 +30,8 @@ impl<'a> CompilerInstance<'a> {
         let ir = ir::convert_program_to_ir(&ast, &name_store)?;
         let file = File::create(self.output_file).map_err(|e| format!("{}", e))?;
         let mut writer = BufWriter::new(&file);
-        let res = codegen::compile_to_c(&ir, &name_store, &mut writer).map_err(|e| format!("{}", e));
+        codegen::compile_to_c(&ir, &name_store, &mut writer).map_err(|e| format!("{}", e))?;
         writer.flush().map_err(|e| format!("{}", e))?;
-        res
+        Ok(())
     }
 }

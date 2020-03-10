@@ -32,6 +32,8 @@ impl NameStore {
         self.store.get(id)
     }
 
+    //We use this for some tests
+    #[allow(dead_code)]
     pub fn by_index(&self, idx: usize) -> Option<InternedName> {
         if idx < self.store.len() {
             Some(InternedName(idx))
