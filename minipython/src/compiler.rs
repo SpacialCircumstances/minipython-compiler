@@ -8,15 +8,17 @@ use std::io::{BufWriter, Write};
 
 pub struct CompilerInstance<'a> {
     input_file: &'a Path,
-    output_file: &'a Path
+    output_file: &'a Path,
+    compile: bool
 }
 
 impl<'a> CompilerInstance<'a> {
-    pub fn new(input_file: &'a Path, output_file: &'a Path) -> Result<CompilerInstance<'a>, String> {
+    pub fn new(input_file: &'a Path, output_file: &'a Path, compile: bool) -> Result<CompilerInstance<'a>, String> {
         if input_file.exists() {
             Ok(CompilerInstance {
                 input_file,
-                output_file
+                output_file,
+                compile
             })
         } else {
             Err(String::from(format!("Input file {} does not exist", input_file.display())))
