@@ -87,7 +87,7 @@ pub fn compile_to_c(program: &IRProgram, name_store: &NameStore, output: &mut Bu
 
     compile_block(&program.main, name_store, output)?;
 
-    writeln!(output, "printf(\"{}={}\", {});", C_VALUE_FORMAT, program.output.get_name(name_store).unwrap(), output_name)?;
+    writeln!(output, "printf(\"{}={}\", {});", program.output.get_name(name_store).unwrap(), C_VALUE_FORMAT, output_name)?;
     writeln!(output, "return 0;")?;
     writeln!(output, "}}")?;
 
