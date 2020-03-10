@@ -4,7 +4,7 @@ use std::error::Error;
 use std::io::{BufWriter, Write};
 use std::fs::File;
 use crate::value::Value;
-use crate::ir::IRStatement::{ValueModify, Return, Loop};
+use crate::ir::IRStatement::{ValueModify, Return, Loop, FunctionCall};
 
 const C_VALUE_TYPE: &str = "unsigned long long int";
 const C_VALUE_FORMAT: &str = "%llu";
@@ -36,8 +36,13 @@ fn compile_statement(statement: &IRStatement, name_store: &NameStore, output: &m
             }
 
             writeln!(output, "}}")?;
+        },
+        FunctionCall { func, args, target } => {
+            let func_name = name_store.get(*func).unwrap();
+            let target_name = to_value_name(*target, name_store);
+            let args_names = args.iter().map(|&v| to_value_name(v, name_store)).collect::<Vec<String>>().join(", ");
+            writeln!(output, "{} = {}({});", target_name, func_name, args_names)?;
         }
-        _ => unimplemented!()
     }
     Ok(())
 }
