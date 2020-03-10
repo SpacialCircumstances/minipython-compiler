@@ -9,11 +9,11 @@ use std::io::{BufWriter, Write};
 pub struct CompilerInstance<'a> {
     input_file: &'a Path,
     output_file: &'a Path,
-    compile: bool
+    compile: Option<&'a Path>
 }
 
 impl<'a> CompilerInstance<'a> {
-    pub fn new(input_file: &'a Path, output_file: &'a Path, compile: bool) -> Result<CompilerInstance<'a>, String> {
+    pub fn new(input_file: &'a Path, output_file: &'a Path, compile: Option<&'a Path>) -> Result<CompilerInstance<'a>, String> {
         if input_file.exists() {
             Ok(CompilerInstance {
                 input_file,
