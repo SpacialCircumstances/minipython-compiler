@@ -11,11 +11,6 @@ fn parse_args<'a>() -> ArgMatches<'a> {
             .help("Sets the output file name")
             .value_name("FILE")
             .takes_value(true))
-        .arg(Arg::with_name("EXE")
-            .help("Create executeable")
-            .long("exe")
-            .value_name("EXECUTABLE_FILE")
-            .takes_value(true))
         .arg(Arg::with_name("INPUT")
             .help("Input file")
             .required(true)
@@ -31,10 +26,7 @@ fn compile(matches: ArgMatches) -> Result<(), String> {
         .value_of("OUT")
         .map(Path::new)
         .unwrap_or_else(|| default_output.as_path());
-    let compile = matches
-        .value_of("EXE")
-        .map(Path::new);
-    let mut compiler = CompilerInstance::new(input_path, output_file_path, compile)?;
+    let mut compiler = CompilerInstance::new(input_path, output_file_path)?;
     compiler.run()
 }
 
