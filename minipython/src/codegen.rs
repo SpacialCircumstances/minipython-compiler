@@ -26,7 +26,7 @@ fn compile_statement(statement: &IRStatement, name_store: &NameStore, output: &m
         },
         Return(val) => {
             let val_name = to_value_name(*val, name_store);
-            writeln!(output, "return {}", val_name)?;
+            writeln!(output, "return {};", val_name)?;
         },
         Loop { condition_var, body } => {
             writeln!(output, "while ({}) {{", to_value_name(*condition_var, name_store))?;
