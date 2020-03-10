@@ -16,4 +16,3 @@ def add(x, y):
     #endwhile
     return n
 #enddef
-x=add(a, b)
