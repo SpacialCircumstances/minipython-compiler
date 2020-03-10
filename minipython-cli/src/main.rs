@@ -1,7 +1,6 @@
 use clap::{App, Arg, ArgMatches};
 use minipython::compiler::CompilerInstance;
 use std::path::Path;
-use std::str::FromStr;
 
 fn parse_args<'a>() -> ArgMatches<'a> {
     App::new("MiniPython compiler")
@@ -15,7 +14,6 @@ fn parse_args<'a>() -> ArgMatches<'a> {
         .arg(Arg::with_name("EXE")
             .help("Create executeable")
             .long("exe")
-            .long("executable")
             .value_name("EXECUTABLE_FILE")
             .takes_value(true))
         .arg(Arg::with_name("INPUT")
