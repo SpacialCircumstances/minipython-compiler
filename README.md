@@ -1,6 +1,6 @@
 # minipython-compiler
 
-A slightly optimizing compiler for minipython (see (here)[https://github.com/SpacialCircumstances/minipython-interpreter] for an interpreter).
+A slightly optimizing compiler for minipython (see [here](https://github.com/SpacialCircumstances/minipython-interpreter) for an interpreter).
 Minipython code is parsed (correctly, with indentation, this time), then translated to a IR.
 The translation stage applies some very basic optimizations and infers the creation time of variables.
 From the IR, C code is generated (only depends on stdio.h).
